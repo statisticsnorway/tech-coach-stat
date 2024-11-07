@@ -1,0 +1,16 @@
+{
+  "template": "https://github.com/statisticsnorway/ssb-project-template-stat",
+  "commit": "b41ddc5575550db3fe01c16181e6b05701bd41d4",
+  "checkout": "1.1.7",
+  "context": {
+    "cookiecutter": {
+      "full_name": "arneso-ssb",
+      "email": "81353974+arneso-ssb@users.noreply.github.com",
+      "project_name": "tech-coach-stat",
+      "description": "Example of how to produce statistics for meteorological data.",
+      "license_year": "2024",
+      "_template": "https://github.com/statisticsnorway/ssb-project-template-stat"
+    }
+  },
+  "directory": null
+}
