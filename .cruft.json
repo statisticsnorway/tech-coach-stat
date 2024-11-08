@@ -1,7 +1,7 @@
 {
   "template": "https://github.com/statisticsnorway/ssb-project-template-stat",
-  "commit": "b41ddc5575550db3fe01c16181e6b05701bd41d4",
-  "checkout": "1.1.7",
+  "commit": "8d51c3c86c2e8f35f69a8a73bf22b846164093cd",
+  "checkout": null,
   "context": {
     "cookiecutter": {
       "full_name": "arneso-ssb",

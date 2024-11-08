@@ -5,7 +5,11 @@ description = "Example of how to produce statistics for meteorological data."
 authors = ["arneso-ssb <81353974+arneso-ssb@users.noreply.github.com>"]
 license = "MIT"
 readme = "README.md"
-package-mode = false
+# To include functions in Jupyter Notebooks from other parts of the directory tree,
+# without using ProjectRoot from ssb-fagfunksjoner.
+packages = [
+    { include = "functions", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
@@ -40,3 +44,4 @@ cell_metadata_filter = "-papermill,tags"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+testpaths = ["tests"]
