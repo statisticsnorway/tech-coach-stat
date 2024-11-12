@@ -8,6 +8,7 @@ from functions.versions import get_latest_file_version
 
 PREFIX = "gs://ssb-tip-tutorials-data-produkt-prod/temp/versiontests"
 
+
 @pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
 def test_get_directory_files() -> None:
     file = f"{PREFIX}/tc1/file_v1.txt"
