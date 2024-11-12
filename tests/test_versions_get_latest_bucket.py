@@ -6,15 +6,10 @@ from functions.ssbplatforms import is_dapla
 from functions.versions import get_latest_file_version
 
 
-PREFIX = "gs://ssb-tech-coach-data-produkt-prod/temp/versiontests"
-
-
-print(f"Dapla: {is_dapla()}")
-
+PREFIX = "gs://ssb-tip-tutorials-data-produkt-prod/temp/versiontests"
 
 @pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
 def test_get_directory_files() -> None:
-    print(f"Dapla: {is_dapla()}")
     file = f"{PREFIX}/tc1/file_v1.txt"
     result = _get_directory_files(file)
     assert len(result) == 3
