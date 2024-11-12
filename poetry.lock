@@ -2537,6 +2537,21 @@ test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.9.2)"]
 
 [[package]]
+name = "pandas-stubs"
+version = "2.2.3.241009"
+description = "Type annotations for pandas"
+optional = false
+python-versions = ">=3.10"
+files = [
+    {file = "pandas_stubs-2.2.3.241009-py3-none-any.whl", hash = "sha256:3a6f8f142105a42550be677ba741ba532621f4e0acad2155c0e7b2450f114cfa"},
+    {file = "pandas_stubs-2.2.3.241009.tar.gz", hash = "sha256:d4ab618253f0acf78a5d0d2bfd6dffdd92d91a56a69bdc8144e5a5c6d25be3b5"},
+]
+
+[package.dependencies]
+numpy = ">=1.23.5"
+types-pytz = ">=2022.1.1"
+
+[[package]]
 name = "parso"
 version = "0.8.4"
 description = "A Python Parser"
@@ -3296,6 +3311,20 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "python-dotenv"
+version = "1.0.1"
+description = "Read key-value pairs from a .env file and set them as environment variables"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "python-dotenv-1.0.1.tar.gz", hash = "sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca"},
+    {file = "python_dotenv-1.0.1-py3-none-any.whl", hash = "sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a"},
+]
+
+[package.extras]
+cli = ["click (>=5.0)"]
+
+[[package]]
 name = "python-json-logger"
 version = "2.0.7"
 description = "A python library adding a json log formatter"
@@ -4019,6 +4048,31 @@ files = [
 ]
 
 [[package]]
+name = "types-pytz"
+version = "2024.2.0.20241003"
+description = "Typing stubs for pytz"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-pytz-2024.2.0.20241003.tar.gz", hash = "sha256:575dc38f385a922a212bac00a7d6d2e16e141132a3c955078f4a4fd13ed6cb44"},
+    {file = "types_pytz-2024.2.0.20241003-py3-none-any.whl", hash = "sha256:3e22df1336c0c6ad1d29163c8fda82736909eb977281cb823c57f8bae07118b7"},
+]
+
+[[package]]
+name = "types-requests"
+version = "2.32.0.20241016"
+description = "Typing stubs for requests"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-requests-2.32.0.20241016.tar.gz", hash = "sha256:0d9cad2f27515d0e3e3da7134a1b6f28fb97129d86b867f24d9c726452634d95"},
+    {file = "types_requests-2.32.0.20241016-py3-none-any.whl", hash = "sha256:4195d62d6d3e043a4eaaf08ff8a62184584d2e8684e9d2aa178c7915a7da3747"},
+]
+
+[package.dependencies]
+urllib3 = ">=2"
+
+[[package]]
 name = "typing-extensions"
 version = "4.12.2"
 description = "Backported and Experimental Type Hints for Python 3.8+"
@@ -4337,4 +4391,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "3f1a5e0264c58fd0e04700dd80091dcb51e99c2af29faf57ab37248881b661a0"
+content-hash = "4a04bc2f3be84c7f93fdfc052943b7f28d06310308bc9853814ff80789f51c85"
