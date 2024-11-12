@@ -21,7 +21,7 @@ def get_latest_file_version(filepath: Path | str) -> Path | str | None:
     Returns:
         The latest version of the file, or None if no such files are found.
 
-     Raises:
+    Raises:
         TypeError: If filepath is not of type pathlib.Path or str.
     """
     if isinstance(filepath, Path):

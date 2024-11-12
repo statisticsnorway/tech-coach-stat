@@ -148,7 +148,7 @@ def get_latest_jsonfile_content(filepath: Path | str) -> list[dict[str, Any]] | 
             return cast(list[dict[str, Any]], json.load(file))
 
 
-def get_sources() -> list[dict]:
+def get_sources() -> list[dict[str, Any]]:
     """Retrieve a list of observation locations from the FROST API and manage storage.
 
     Fetches the data and compares the fetched data to the most recent local version of
@@ -168,15 +168,22 @@ def get_sources() -> list[dict]:
     latest_data = get_latest_jsonfile_content(source_file)
     if data != latest_data:
         if (latest_file_version := get_latest_file_version(source_file)) is not None:
-            next_file_version = get_next_file_version(latest_file_version)
+            next_file = get_next_file_version(latest_file_version)
         else:
-            next_file_version = kildedata_dir / "sources_v1.json"
-        with next_file_version.open(mode="w", encoding="utf-8") as f:
-            json.dump(data, f, indent=4)
+            next_file = kildedata_dir / "sources_v1.json"
+
+        if isinstance(next_file, Path):
+            with next_file.open(mode="w", encoding="utf-8") as file:
+                json.dump(data, file, indent=4)
+        elif isinstance(next_file, str):
+            with FileClient.gcs_open(next_file, mode="w") as file:
+                json.dump(data, file, indent=4)
     return data
 
 
-def find_source_ids(source_names: list[str], sources_: list[dict]) -> list[str]:
+def find_source_ids(
+    source_names: list[str], sources_: list[dict[str, Any]]
+) -> list[str]:
     """Find source ids for the provided source names (observation locations).
 
     Args:

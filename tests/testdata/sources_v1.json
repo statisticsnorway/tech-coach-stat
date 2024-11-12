@@ -1,0 +1,32 @@
+[
+    {
+        "@type": "SensorSystem",
+        "id": "SN47230",
+        "name": "\u00c5KRA UNGDOMSSKOLE",
+        "shortName": "\u00c5kra ",
+        "country": "Norge",
+        "countryCode": "NO",
+        "geometry": {
+            "@type": "Point",
+            "coordinates": [
+                5.1963,
+                59.2555
+            ],
+            "nearest": false
+        },
+        "masl": 18,
+        "validFrom": "2013-10-29T00:00:00.000Z",
+        "county": "ROGALAND",
+        "countyId": 11,
+        "municipality": "KARM\u00d8Y",
+        "municipalityId": 1149,
+        "ontologyId": 0,
+        "stationHolders": [
+            "KARM\u00d8Y KOMMUNE"
+        ],
+        "externalIds": [
+            "506131077"
+        ],
+        "wigosId": "0-578-0-47230"
+    }
+]
