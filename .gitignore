@@ -213,3 +213,9 @@ rsconnect/
 # Blaise specific ignores
 *.bdix
 *.bdbx
+
+# PyCharm
+.idea/
+
+# Data files
+data/

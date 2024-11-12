@@ -21,8 +21,6 @@
 # Central imports (pandas as pd etc.)
 import os
 
-import pandas as pd
-
 
 # %% [markdown]
 # ### Demo av importer fra produksjonsnivå
@@ -30,7 +28,7 @@ import pandas as pd
 # %%
 # Change directory until find project root
 notebook_path = os.getcwd()
-for folder_level in range(50):
+for _ in range(50):
     if "pyproject.toml" in os.listdir():
         break
     os.chdir("../")

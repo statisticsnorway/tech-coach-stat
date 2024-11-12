@@ -5,6 +5,7 @@ from functions._versions_bucket import get_filename
 from functions.ssbplatforms import is_dapla
 from functions.versions import get_latest_file_version
 
+
 PREFIX = "gs://ssb-tech-coach-data-produkt-prod/temp/versiontests"
 
 
