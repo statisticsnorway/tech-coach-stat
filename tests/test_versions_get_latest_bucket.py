@@ -2,11 +2,12 @@ import pytest
 
 from functions._versions_bucket import _get_directory_files
 from functions._versions_bucket import get_filename
+from functions.config import settings
 from functions.ssbplatforms import is_dapla
 from functions.versions import get_latest_file_version
 
 
-PREFIX = "gs://ssb-tip-tutorials-data-produkt-prod/temp/versiontests"
+PREFIX = f"{settings.product_root_dir}/temp/versiontests"
 
 
 @pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
