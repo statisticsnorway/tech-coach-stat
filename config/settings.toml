@@ -1,0 +1,4 @@
+kildedata_root_dir = "gs://ssb-tip-tutorials-data-kilde-prod"
+product_root_dir = "gs://ssb-tip-tutorials-data-produkt-prod"
+collect_from_date = "2011-01-01"
+collect_to_date = "2012-01-01"
