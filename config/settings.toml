@@ -1,4 +1,21 @@
+# This file store common configurations for the project.
+#
+# The sections specify different environments, and the value of the variables in the
+# specified environment. The values in the default section is always set first,
+# and if another environment is specified then the values are overriden.
+#
+# You can select whic environment to use in the file config/config.py.
+
+[default]
 kildedata_root_dir = "gs://ssb-tip-tutorials-data-kilde-prod"
 product_root_dir = "gs://ssb-tip-tutorials-data-produkt-prod"
 collect_from_date = "2011-01-01"
 collect_to_date = "2012-01-01"
+
+[daplalab_files]
+kildedata_root_dir = "/bucket/kildedata"
+product_root_dir = "/bucket/produkt"
+
+[local_files]
+kildedata_root_dir = "../data/kildedata"
+product_root_dir = "../data"
