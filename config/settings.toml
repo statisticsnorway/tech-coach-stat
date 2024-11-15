@@ -12,7 +12,7 @@ product_root_dir = "gs://ssb-tip-tutorials-data-produkt-prod"
 weather_stations_kildedata_file = "@format {this.kildedata_root_dir}/weather_stations_v1.json"
 collect_from_date = "2011-01-01"
 collect_to_date = "2012-01-01"
-observation_locations = ["OSLO - BLINDERN", "KONGSVINGER"]
+weather_station_names = ["OSLO - BLINDERN", "KONGSVINGER"]
 
 [daplalab_files]
 kildedata_root_dir = "/bucket/kildedata"
