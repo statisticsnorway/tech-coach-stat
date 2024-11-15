@@ -14,15 +14,9 @@ import requests
 from dapla import FileClient
 from dotenv import load_dotenv
 
+from functions.config import settings
 from functions.versions import get_latest_file_version
 from functions.versions import get_next_file_version
-
-
-observation_locations = ["OSLO - BLINDERN", "KONGSVINGER"]
-from_date = "2011-01-01"
-to_date = "2012-01-01"
-root_dir = Path(__file__).parent.parent.parent / "data"
-kildedata_dir = root_dir / "kildedata"
 
 
 def extract_timespan(observations: list[dict[str, Any]]) -> str:
@@ -111,7 +105,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
             "sum(precipitation_amount P1D),"
             "max(wind_speed P1D)"
         ),
-        "referencetime": f"{from_date}/{to_date}",
+        "referencetime": f"{settings.collect_from_date}/{settings.collect_to_date}",
         "levels": "default",
         "timeoffsets": "default",
     }
@@ -120,7 +114,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
     print("Data retrieved from frost.met.no!")
     print(f"Storing to {filename}")
 
-    source_file = kildedata_dir / filename
+    source_file = settings.kildedata_root_dir / filename
     with source_file.open(mode="w", encoding="utf-8") as file:
         json.dump(data, file, indent=4)
     return data
@@ -140,48 +134,37 @@ def get_latest_jsonfile_content(filepath: Path | str) -> list[dict[str, Any]] | 
     latest_file = get_latest_file_version(filepath)
     if latest_file is None:
         return None
-    if isinstance(latest_file, Path):
-        with latest_file.open(encoding="utf-8") as file:
-            return cast(list[dict[str, Any]], json.load(file))
-    elif isinstance(latest_file, str):
-        with FileClient.gcs_open(latest_file) as file:
-            return cast(list[dict[str, Any]], json.load(file))
+    return read_json_file(latest_file)
 
 
-def get_sources() -> list[dict[str, Any]]:
-    """Retrieve a list of observation locations from the FROST API and manage storage.
+def get_weather_stations() -> list[dict[str, Any]]:
+    """Retrieve a list of weather stations from the FROST API and manage storage.
 
     Fetches the data and compares the fetched data to the most recent local version of
     the data and, if the data has changed, saves the data as new version.
 
     Returns:
-        The fetched observation locations and data about them.
+        The fetched weather stations and data about them.
     """
     endpoint = "https://frost.met.no/sources/v0.jsonld"
     parameters = {
         "country": "Norge",
     }
     data = fetch_data(endpoint, parameters)
-    source_file = kildedata_dir / "sources.json"
 
     # Check if data is changed since last version and write new file if so
-    latest_data = get_latest_jsonfile_content(source_file)
+    base_file = settings.weather_stations_kildedata_file
+    latest_data = get_latest_jsonfile_content(base_file)
     if data != latest_data:
-        if (latest_file_version := get_latest_file_version(source_file)) is not None:
+        if (latest_file_version := get_latest_file_version(base_file)) is not None:
             next_file = get_next_file_version(latest_file_version)
         else:
-            next_file = kildedata_dir / "sources_v1.json"
-
-        if isinstance(next_file, Path):
-            with next_file.open(mode="w", encoding="utf-8") as file:
-                json.dump(data, file, indent=4)
-        elif isinstance(next_file, str):
-            with FileClient.gcs_open(next_file, mode="w") as file:
-                json.dump(data, file, indent=4)
+            next_file = settings.weather_stations_kildedata_file
+        write_json_file(next_file, data)
     return data
 
 
-def find_source_ids(
+def get_weather_stations_ids(
     source_names: list[str], sources_: list[dict[str, Any]]
 ) -> list[str]:
     """Find source ids for the provided source names (observation locations).
@@ -200,10 +183,58 @@ def find_source_ids(
     return [name_to_id[name] for name in source_names]
 
 
+def write_json_file(filepath: Path | str, data: list[dict[str, Any]]) -> None:
+    """Writes dictionaries to a JSON file stored in a GCS bucket or in a local file system.
+
+    Args:
+        filepath: The path to the file where the data should be written.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+        data: The data to be written to the file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    if isinstance(filepath, Path):
+        with filepath.open(mode="w", encoding="utf-8") as file:
+            json.dump(data, file, indent=4)
+    elif isinstance(filepath, str):
+        with FileClient.gcs_open(filepath, mode="w") as file:
+            json.dump(data, file, indent=4)
+    else:
+        raise TypeError("Expected filepath to be of type Path or str.")
+
+
+def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
+    """Reads a JSON file stored in a GCS bucket or in a local file system.
+
+    Args:
+        filepath: The path to the file which should be read.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+
+    Returns:
+        The content of the JSON file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    if isinstance(filepath, Path):
+        with filepath.open(encoding="utf-8") as file:
+            return cast(list[dict[str, Any]], json.load(file))
+    elif isinstance(filepath, str):
+        with FileClient.gcs_open(filepath) as file:
+            return cast(list[dict[str, Any]], json.load(file))
+    else:
+        raise TypeError("Expected filepath to be of type Path or str.")
+
+
 if __name__ == "__main__":
     # Create directories if they don't exist
-    kildedata_dir.mkdir(parents=True, exist_ok=True)
+    kildedata_dir = settings.kildedata_root_dir
+    if isinstance(kildedata_dir, Path):
+        kildedata_dir.mkdir(parents=True, exist_ok=True)
 
-    sources = get_sources()
-    source_ids = find_source_ids(observation_locations, sources)
+    sources = get_weather_stations()
+    source_ids = get_weather_stations_ids(settings.observation_locations, sources)
     get_observations(source_ids)
