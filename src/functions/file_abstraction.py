@@ -50,3 +50,26 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
             return cast(list[dict[str, Any]], json.load(file))
     else:
         raise TypeError("Expected filepath to be of type Path or str.")
+
+
+def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
+    """Add a filename to a filepath, handling both filepath as Path and str.
+
+    Args:
+        filepath: The path to which the filename should be added.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+        filename: The filename to add to the filepath.
+
+    Returns:
+        A filepath with the filename added.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    if isinstance(filepath, Path):
+        return filepath / filename
+    elif isinstance(filepath, str):
+        return f"{filepath}/{filename}"
+    else:
+        raise TypeError("Expected filepath to be of type Path or str.")

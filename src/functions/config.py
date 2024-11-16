@@ -17,7 +17,9 @@ from dynaconf import Validator
 
 def absolute_path(relative_path: str) -> Path:
     """Convert a relative path as str to a pathlib.Path object with an absolute path."""
-    base_dir = repo_root_dir(Path(__file__).parent) / "config"  # The paths are relative the config directory
+    base_dir = (
+        repo_root_dir(Path(__file__).parent) / "config"
+    )  # The paths are relative the config directory
     return (base_dir / Path(relative_path)).resolve()
 
 

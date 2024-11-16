@@ -4,7 +4,6 @@
 #
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
-import json
 import os
 from pathlib import Path
 from typing import Any
@@ -14,6 +13,7 @@ import requests
 from dotenv import load_dotenv
 
 from functions.config import settings
+from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import read_json_file
 from functions.file_abstraction import write_json_file
 from functions.versions import get_latest_file_version
@@ -79,13 +79,13 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
         "timeoffsets": "default",
     }
     data = fetch_data(endpoint, parameters)
-    filename = f"observations_p{extract_timespan(data)}.json"
     print("Data retrieved from frost.met.no!")
-    print(f"Storing to {filename}")
 
-    source_file = settings.kildedata_root_dir / filename
-    with source_file.open(mode="w", encoding="utf-8") as file:
-        json.dump(data, file, indent=4)
+    filename = f"observations_p{extract_timespan(data)}.json"
+    observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
+    print(f"Storing to {observations_file}")
+
+    write_json_file(observations_file, data)
     return data
 
 
@@ -171,12 +171,38 @@ def get_weather_stations_ids(
     return [name_to_id[name] for name in weather_stations_names]
 
 
-def run_all() -> None:
-    """Run all functions in this module."""
-    # Create directories if they don't exist
-    kildedata_dir = settings.kildedata_root_dir
-    if isinstance(kildedata_dir, Path):
-        kildedata_dir.mkdir(parents=True, exist_ok=True)
+def create_dir_if_not_exist(directory: Path | str) -> None:
+    """Create directory if it does not exist, handling both directory as Path and str.
+
+    The function handles the case on DaplaLab where the first two levels of the
+    directory path are read-only, for example `/bucket/produkt`.
+
+    If the type is `str`, that means representing a path in a GCS bucket, there is
+    no need to do anything. Since directories does not exist in a bucket.
+
+    Args:
+        directory: The directory to check or create.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+    """
+    if isinstance(directory, Path):
+        if str(directory).startswith("/bucket"):
+            parts = directory.parts
+            if len(parts) < 3:
+                raise ValueError("The provided path must have at least three levels.")
+
+            # Construct the writable path starting from the third level
+            writable_path = Path(*parts[:2]) / Path(*parts[2:])
+            print(writable_path)
+            if not writable_path.exists():
+                writable_path.mkdir(parents=True, exist_ok=True)
+        else:
+            dir.mkdir(parents=True, exist_ok=True)
+
+
+def run() -> None:
+    """Run functions in this module."""
+    create_dir_if_not_exist(settings.kildedata_root_dir)
 
     weather_station_list = get_weather_stations()
     selected_weather_station_ids = get_weather_stations_ids(
@@ -186,4 +212,4 @@ def run_all() -> None:
 
 
 if __name__ == "__main__":
-    run_all()
+    run()
