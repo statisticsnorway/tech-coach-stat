@@ -26,7 +26,7 @@ def test_daplalab_files_env(daplalab_files_env) -> None:
 
     # Check variable substitution
     file = settings.weather_stations_kildedata_file
-    assert file == Path(r"/bucket/kilde/frost/weather_stations_v1.json")
+    assert file == Path(r"/buckets/kilde/frost/weather_stations_v1.json")
 
 
 def test_local_files_env(local_files_env) -> None:

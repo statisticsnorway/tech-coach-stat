@@ -46,6 +46,7 @@ def get_weather_stations() -> list[dict[str, Any]]:
         else:
             next_file = settings.weather_stations_kildedata_file
         write_json_file(next_file, data)
+        print(f"Storing to {next_file}")
     return data
 
 
@@ -186,24 +187,24 @@ def create_dir_if_not_exist(directory: Path | str) -> None:
             Use the `str` type if it is a file stored in a GCS bucket.
     """
     if isinstance(directory, Path):
-        if str(directory).startswith("/bucket"):
+        if str(directory).startswith("/buckets"):
             parts = directory.parts
             if len(parts) < 3:
                 raise ValueError("The provided path must have at least three levels.")
 
             # Construct the writable path starting from the third level
             writable_path = Path(*parts[:2]) / Path(*parts[2:])
-            print(writable_path)
             if not writable_path.exists():
                 writable_path.mkdir(parents=True, exist_ok=True)
         else:
-            dir.mkdir(parents=True, exist_ok=True)
+            directory.mkdir(parents=True, exist_ok=True)
 
 
 def run() -> None:
     """Run functions in this module."""
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
+    print("Start collecting data.")
     weather_station_list = get_weather_stations()
     selected_weather_station_ids = get_weather_stations_ids(
         settings.weather_station_names, weather_station_list

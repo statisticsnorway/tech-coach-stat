@@ -15,8 +15,8 @@ collect_to_date = "2012-01-01"
 weather_station_names = ["OSLO - BLINDERN", "KONGSVINGER"]
 
 [daplalab_files]
-kildedata_root_dir = "/bucket/kilde/frost"
-product_root_dir = "/bucket/produkt"
+kildedata_root_dir = "/buckets/kilde/frost"
+product_root_dir = "/buckets/produkt"
 
 [local_files]  # Relative paths to the config directory
 kildedata_root_dir = "../data/kildedata/frost"

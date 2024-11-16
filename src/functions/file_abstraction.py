@@ -18,14 +18,13 @@ def write_json_file(filepath: Path | str, data: list[dict[str, Any]]) -> None:
     Raises:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
+    _validate_filepath(filepath)
     if isinstance(filepath, Path):
         with filepath.open(mode="w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
     elif isinstance(filepath, str):
         with FileClient.gcs_open(filepath, mode="w") as file:
             json.dump(data, file, indent=4)
-    else:
-        raise TypeError("Expected filepath to be of type Path or str.")
 
 
 def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
@@ -42,14 +41,13 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
     Raises:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
+    _validate_filepath(filepath)
     if isinstance(filepath, Path):
         with filepath.open(encoding="utf-8") as file:
             return cast(list[dict[str, Any]], json.load(file))
     elif isinstance(filepath, str):
         with FileClient.gcs_open(filepath) as file:
             return cast(list[dict[str, Any]], json.load(file))
-    else:
-        raise TypeError("Expected filepath to be of type Path or str.")
 
 
 def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
@@ -67,9 +65,13 @@ def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
     Raises:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
+    _validate_filepath(filepath)
     if isinstance(filepath, Path):
         return filepath / filename
     elif isinstance(filepath, str):
         return f"{filepath}/{filename}"
-    else:
+
+
+def _validate_filepath(filepath: Path | str) -> None:
+    if not isinstance(filepath, Path | str):
         raise TypeError("Expected filepath to be of type Path or str.")
