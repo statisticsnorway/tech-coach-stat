@@ -10,7 +10,9 @@ from functions.versions import get_latest_file_version
 PREFIX = f"{settings.product_root_dir}/temp/versiontests"
 
 
-@pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
+@pytest.mark.skipif(
+    not is_dapla("tip-tutorials-developers"), reason="Bucket tests only runs on Dapla"
+)
 def test_get_directory_files() -> None:
     file = f"{PREFIX}/tc1/file_v1.txt"
     result = _get_directory_files(file)
@@ -18,7 +20,9 @@ def test_get_directory_files() -> None:
 
 
 # Returns the latest file version when multiple versions exist
-@pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
+@pytest.mark.skipif(
+    not is_dapla("tip-tutorials-developers"), reason="Bucket tests only runs on Dapla"
+)
 def test_returns_latest_version() -> None:
     file = f"{PREFIX}/tc1/file_v1.txt"
 
@@ -27,7 +31,9 @@ def test_returns_latest_version() -> None:
 
 
 # Handles filenames with no version numbers correctly
-@pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
+@pytest.mark.skipif(
+    not is_dapla("tip-tutorials-developers"), reason="Bucket tests only runs on Dapla"
+)
 def test_handles_no_version_numbers() -> None:
     file = f"{PREFIX}/tc2/file.txt"
 
@@ -36,7 +42,9 @@ def test_handles_no_version_numbers() -> None:
 
 
 # Deals with files having similar names but different extensions
-@pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
+@pytest.mark.skipif(
+    not is_dapla("tip-tutorials-developers"), reason="Bucket tests only runs on Dapla"
+)
 def test_files_with_different_extensions() -> None:
     file = f"{PREFIX}/tc3/file_v1.txt"
 
@@ -45,7 +53,9 @@ def test_files_with_different_extensions() -> None:
 
 
 # Handles filenames with special characters or spaces
-@pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
+@pytest.mark.skipif(
+    not is_dapla("tip-tutorials-developers"), reason="Bucket tests only runs on Dapla"
+)
 def test_handles_special_characters_and_spaces() -> None:
     file = f"{PREFIX}/tc4/file @.txt"
 
@@ -54,7 +64,9 @@ def test_handles_special_characters_and_spaces() -> None:
 
 
 # Handles filenames with multiple '_v' patterns
-@pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
+@pytest.mark.skipif(
+    not is_dapla("tip-tutorials-developers"), reason="Bucket tests only runs on Dapla"
+)
 def test_handles_multiple_v_patterns() -> None:
     file = f"{PREFIX}/tc5/file_v1_v2.txt"
 
