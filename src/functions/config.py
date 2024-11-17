@@ -10,16 +10,25 @@ See the file `config/settings.toml` for details.
 
 from pathlib import Path
 
-from dapla import repo_root_dir
 from dynaconf import Dynaconf
 from dynaconf import Validator
 
 
 def absolute_path(relative_path: str) -> Path:
-    """Convert a relative path as str to a pathlib.Path object with an absolute path."""
-    base_dir = (
-        repo_root_dir(Path(__file__).parent) / "config"
-    )  # The paths are relative the config directory
+    """Converts a relative path based on the config directory into an absolute path.
+
+    This function takes a relative path as input and appends it to the base config
+    directory path. The resulting path is then resolved to an absolute path.
+    The type in converted from `str` to `pathlib.Path`.
+
+    Args:
+        relative_path: The relative file path to be converted.
+
+    Returns:
+        The absolute path corresponding to the given relative path.
+    """
+    # Assuming this file is 3 levels below repository root
+    base_dir = Path(__file__).parent.parent.parent / "config"
     return (base_dir / Path(relative_path)).resolve()
 
 
@@ -29,6 +38,13 @@ settings = Dynaconf(
     environments=True,
     env="default",  # Change this to switch environment: daplalab_files or local_files
     validators=[
+        Validator(
+            "dapla_team",
+            "collect_from_date",
+            "collect_to_date",
+            "weather_station_names",
+            must_exist=True,
+        ),
         Validator(
             "kildedata_root_dir",
             "product_root_dir",

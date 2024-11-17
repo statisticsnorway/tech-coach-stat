@@ -7,8 +7,9 @@
 # You can select whic environment to use in the file config/config.py.
 
 [default]
-kildedata_root_dir = "gs://ssb-tip-tutorials-data-kilde-prod/frost"
-product_root_dir = "gs://ssb-tip-tutorials-data-produkt-prod"
+dapla_team = "tip-tutorials"
+kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-prod/frost"
+product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-prod"
 weather_stations_kildedata_file = "@format {this.kildedata_root_dir}/weather_stations_v1.json"
 collect_from_date = "2011-01-01"
 collect_to_date = "2012-01-01"

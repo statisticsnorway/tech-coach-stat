@@ -9,7 +9,7 @@ from functions.ssbplatforms import is_dapla
 
 def test_read_json_pathlib() -> None:
     print(f"product_root_dir = {settings.product_root_dir}")
-    jsonfile_pathlib = Path(__file__).parent / "testdata" / "sources_v1.json"
+    jsonfile_pathlib = Path(__file__).parent / "testdata" / "weather_stations_v1.json"
     result = read_json_file(jsonfile_pathlib)
     assert len(result) == 1
 
