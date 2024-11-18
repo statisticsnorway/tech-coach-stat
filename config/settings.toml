@@ -1,0 +1,24 @@
+# This file store common configurations for the project.
+#
+# The sections specify different environments, and the value of the variables in the
+# specified environment. The values in the default section is always set first,
+# and if another environment is specified then the values are overriden.
+#
+# You can select whic environment to use in the file config/config.py.
+
+[default]
+dapla_team = "tip-tutorials"
+kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-prod/frost"
+product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-prod"
+weather_stations_kildedata_file = "@format {this.kildedata_root_dir}/weather_stations_v1.json"
+collect_from_date = "2011-01-01"
+collect_to_date = "2012-01-01"
+weather_station_names = ["OSLO - BLINDERN", "KONGSVINGER"]
+
+[daplalab_files]
+kildedata_root_dir = "/buckets/kilde/frost"
+product_root_dir = "/buckets/produkt"
+
+[local_files]  # Relative paths to the config directory
+kildedata_root_dir = "../data/kildedata/frost"
+product_root_dir = "../data"
