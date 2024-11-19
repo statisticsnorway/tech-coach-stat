@@ -4,7 +4,7 @@ This module loads the configurations stored in the `config/settings.toml` file a
 them available in the settings variable.
 
 The default config environment is working with buckets on Dapla. You can change the
-environment py setting the env variable to `daplalab_files` or `local_files`.
+environment by setting the env variable to `daplalab_files` or `local_files`.
 See the file `config/settings.toml` for details.
 """
 
@@ -39,15 +39,9 @@ settings = Dynaconf(
     env="default",  # Change this to switch environment: daplalab_files or local_files
     validators=[
         Validator(
-            "dapla_team",
-            "collect_from_date",
-            "collect_to_date",
-            "weather_station_names",
-            must_exist=True,
-        ),
-        Validator(
             "kildedata_root_dir",
             "product_root_dir",
+            "pre_inndata_dir",
             "weather_stations_kildedata_file",
             must_exist=True,
             cast=Path,
@@ -56,10 +50,18 @@ settings = Dynaconf(
         Validator(
             "kildedata_root_dir",
             "product_root_dir",
+            "pre_inndata_dir",
             "weather_stations_kildedata_file",
             must_exist=True,
             cast=absolute_path,
             env="local_files",
+        ),
+        Validator(
+            "dapla_team",
+            "collect_from_date",
+            "collect_to_date",
+            "weather_station_names",
+            must_exist=True,
         ),
     ],
 )

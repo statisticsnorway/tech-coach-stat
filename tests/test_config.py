@@ -6,17 +6,17 @@ from functions.config import settings
 
 
 @pytest.fixture(scope="session")
-def default_env():
+def default_env() -> None:
     settings.configure(FORCE_ENV_FOR_DYNACONF="default")
 
 
 @pytest.fixture(scope="session")
-def daplalab_files_env():
+def daplalab_files_env() -> None:
     settings.configure(FORCE_ENV_FOR_DYNACONF="daplalab_files")
 
 
 @pytest.fixture(scope="session")
-def local_files_env():
+def local_files_env() -> None:
     settings.configure(FORCE_ENV_FOR_DYNACONF="local_files")
 
 
@@ -31,7 +31,9 @@ def test_daplalab_files_env(daplalab_files_env) -> None:
 
 def test_local_files_env(local_files_env) -> None:
     # In this environment the returned directory shall be of type pathlib.Path
+    assert isinstance(settings.kildedata_root_dir, Path)
     assert isinstance(settings.product_root_dir, Path)
+    assert isinstance(settings.pre_inndata_dir, Path)
 
     # Check variable substitution and converting of relative path
     lf_result = settings.weather_stations_kildedata_file
