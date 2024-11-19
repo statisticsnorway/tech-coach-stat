@@ -18,20 +18,20 @@ import pandas as pd
 from dapla import FileClient
 
 
-def main(source_file: str) -> None:
+def main(source_file: Path | str) -> None:
     """Orchestrates the processing of the given source file.
 
     Args:
         source_file: The path to the source file to be processed.
     """
     logging.info(f"Start processing {source_file}")
-    if "weather_station" in source_file:
+    if "weather_station" in str(source_file):
         process_weather_stations(source_file)
     else:
         process_observations(source_file)
 
 
-def process_weather_stations(source_file: str) -> None:
+def process_weather_stations(source_file: Path | str) -> None:
     """Process weather station data from the kildedata to pre-inndata data state.
 
     Args:
@@ -65,11 +65,11 @@ def process_weather_stations(source_file: str) -> None:
     )
 
     target_filepath = get_target_filepath(source_file)
-    dp.write_pandas(df=df, gcs_path=target_filepath)
+    write_parquet_file(target_filepath, df)
     logging.info(f"Wrote file: {target_filepath}")
 
 
-def process_observations(source_file: str) -> None:
+def process_observations(source_file: Path | str) -> None:
     """Process weather observations from the kildedata to pre-inndata data state.
 
     Args:
@@ -101,7 +101,7 @@ def process_observations(source_file: str) -> None:
     )
 
     target_filepath = get_target_filepath(source_file)
-    dp.write_pandas(df=df, gcs_path=target_filepath)
+    write_parquet_file(target_filepath, df)
     logging.info(f"Wrote file: {target_filepath}")
 
 
@@ -138,11 +138,34 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
     Raises:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
-    if not isinstance(filepath, Path | str):
-        raise TypeError("Expected filepath to be of type Path or str.")
+    _validate_filepath(filepath)
     if isinstance(filepath, Path):
         with filepath.open(encoding="utf-8") as file:
             return cast(list[dict[str, Any]], json.load(file))
     elif isinstance(filepath, str):
         with FileClient.gcs_open(filepath) as file:
             return cast(list[dict[str, Any]], json.load(file))
+
+
+def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
+    """Writes a dataframe to a parquet file stored in a GCS bucket or in a local file system.
+
+    Args:
+        filepath: The path to the file where the data should be written.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+        df: The dataframe to be written to the file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    _validate_filepath(filepath)
+    if isinstance(filepath, Path):
+        df.to_parquet(filepath)
+    elif isinstance(filepath, str):
+        dp.write_pandas(df=df, gcs_path=filepath)
+
+
+def _validate_filepath(filepath: Path | str) -> None:
+    if not isinstance(filepath, Path | str):
+        raise TypeError("Expected filepath to be of type Path or str.")

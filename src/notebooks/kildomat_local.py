@@ -12,9 +12,10 @@ import pandas as pd
 from functions.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import read_json_file
+from functions.file_abstraction import write_parquet_file
 
 
-def main(source_file: Path) -> None:
+def main(source_file: Path | str) -> None:
     """Orchestrates the processing of the given source file.
 
     Args:
@@ -27,7 +28,7 @@ def main(source_file: Path) -> None:
         process_observations(source_file)
 
 
-def process_weather_stations(source_file: Path) -> None:
+def process_weather_stations(source_file: Path | str) -> None:
     """Process weather station data from the kildedata to pre-inndata data state.
 
     Args:
@@ -61,11 +62,11 @@ def process_weather_stations(source_file: Path) -> None:
     )
 
     target_filepath = get_target_filepath(source_file)
-    df.to_parquet(target_filepath)
+    write_parquet_file(target_filepath, df)
     logging.info(f"Wrote file: {target_filepath}")
 
 
-def process_observations(source_file: Path) -> None:
+def process_observations(source_file: Path | str) -> None:
     """Process weather observations from the kildedata to pre-inndata data state.
 
     Args:
@@ -97,7 +98,7 @@ def process_observations(source_file: Path) -> None:
     )
 
     target_filepath = get_target_filepath(source_file)
-    df.to_parquet(target_filepath)
+    write_parquet_file(target_filepath, df)
     logging.info(f"Wrote file: {target_filepath}")
 
 

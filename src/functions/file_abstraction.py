@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+import dapla as dp
+import pandas as pd
 from dapla import FileClient
 
 
@@ -48,6 +50,46 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
     elif isinstance(filepath, str):
         with FileClient.gcs_open(filepath) as file:
             return cast(list[dict[str, Any]], json.load(file))
+
+
+def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
+    """Writes a dataframe to a parquet file stored in a GCS bucket or in a local file system.
+
+    Args:
+        filepath: The path to the file where the data should be written.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+        df: The dataframe to be written to the file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    _validate_filepath(filepath)
+    if isinstance(filepath, Path):
+        df.to_parquet(filepath)
+    elif isinstance(filepath, str):
+        dp.write_pandas(df=df, gcs_path=filepath)
+
+
+def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
+    """Read a parquet file stored in a GCS bucket or in a local file system to a dataframe.
+
+    Args:
+        filepath: The path to the file which should be read.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+
+    Returns:
+        The content of the parquet file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    _validate_filepath(filepath)
+    if isinstance(filepath, Path):
+        return pd.read_parquet(filepath)
+    elif isinstance(filepath, str):
+        return dp.read_pandas(gcs_path=filepath)
 
 
 def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
