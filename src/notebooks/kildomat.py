@@ -18,24 +18,26 @@ import pandas as pd
 from dapla import FileClient
 
 
-def main(source_file: Path | str) -> None:
+def main(source_file: Path | str, target_dir: Path | None = None) -> None:
     """Orchestrates the processing of the given source file.
 
     Args:
         source_file: The path to the source file to be processed.
+        target_dir: Optional target directory. Used when running locally.
     """
     logging.info(f"Start processing {source_file}")
     if "weather_station" in str(source_file):
-        process_weather_stations(source_file)
+        process_weather_stations(source_file, target_dir)
     else:
-        process_observations(source_file)
+        process_observations(source_file, target_dir)
 
 
-def process_weather_stations(source_file: Path | str) -> None:
+def process_weather_stations(source_file: Path | str, target_dir: Path | None) -> None:
     """Process weather station data from the kildedata to pre-inndata data state.
 
     Args:
         source_file: Path to the source JSON file containing weather station data.
+        target_dir: Target directory. Used when running locally, otherwise `None`.
     """
     logging.info("Start processing weather stations file")
     data = read_json_file(source_file)
@@ -64,16 +66,17 @@ def process_weather_stations(source_file: Path | str) -> None:
         {col: "string" for col in df.select_dtypes(include="object").columns}
     )
 
-    target_filepath = get_target_filepath(source_file)
+    target_filepath = get_target_filepath(source_file, target_dir)
     write_parquet_file(target_filepath, df)
     logging.info(f"Wrote file: {target_filepath}")
 
 
-def process_observations(source_file: Path | str) -> None:
+def process_observations(source_file: Path | str, target_dir: Path | None) -> None:
     """Process weather observations from the kildedata to pre-inndata data state.
 
     Args:
         source_file: The path to the source JSON file containing observations data.
+        target_dir: Target directory. Used when running locally, otherwise `None`.
     """
     logging.info("Start processing observations file")
     data = read_json_file(source_file)
@@ -100,24 +103,29 @@ def process_observations(source_file: Path | str) -> None:
         {col: "string" for col in df.select_dtypes(include="object").columns}
     )
 
-    target_filepath = get_target_filepath(source_file)
+    target_filepath = get_target_filepath(source_file, target_dir)
     write_parquet_file(target_filepath, df)
     logging.info(f"Wrote file: {target_filepath}")
 
 
-def get_target_filepath(source_file: str) -> str:
+def get_target_filepath(source_file: Path | str, target_dir: Path | None) -> Path | str:
     """Calculate a target filepath based on the source_file and some constants.
 
     Args:
         source_file: The path to the source file which is to be converted.
+        target_dir: Target directory. Used when running locally, otherwise `None`.
 
     Returns:
         The target file path with the converted file extension and in the correct location.
     """
-    target_bucket = "gs://ssb-tip-tutorials-data-produkt-prod"
-    folder = "tip-tutorials/inndata/temp/pre-inndata"
-    target_filename = source_file.split("/")[-1].replace("json", "parquet")
-    target_filepath = f"{target_bucket}/{folder}/{target_filename}"
+    if target_dir:
+        target_filepath = target_dir / source_file.with_suffix(".parquet").name
+    else:
+        target_bucket = "gs://ssb-tip-tutorials-data-produkt-prod"
+        folder = "tip-tutorials/inndata/temp/pre-inndata"
+        target_filename = source_file.split("/")[-1].replace("json", "parquet")
+        target_filepath = f"{target_bucket}/{folder}/{target_filename}"
+
     logging.info(f"Target file: {target_filepath}")
     return target_filepath
 
