@@ -7,7 +7,8 @@ from functions.ssbplatforms import is_dapla
 from functions.versions import get_latest_file_version
 
 
-PREFIX = f"{settings.product_root_dir}/temp/versiontests"
+root_dir = settings.product_root_dir.removesuffix(f"/{settings.short_name}")
+PREFIX = f"{root_dir}/temp/testcase/versiontest"
 
 
 @pytest.mark.skipif(
