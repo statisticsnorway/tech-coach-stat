@@ -1,0 +1,164 @@
+[
+    {
+        "sourceId": "SN18700:0",
+        "referenceTime": "2011-01-01T00:00:00.000Z",
+        "observations": [
+            {
+                "elementId": "min(air_temperature P1D)",
+                "value": -2.3,
+                "unit": "degC",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 2
+                },
+                "timeOffset": "PT18H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "1",
+                "qualityCode": 2
+            },
+            {
+                "elementId": "mean(air_temperature P1D)",
+                "value": 2.1,
+                "unit": "degC",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 2
+                },
+                "timeOffset": "PT0H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 0
+            },
+            {
+                "elementId": "max(air_temperature P1D)",
+                "value": 5.1,
+                "unit": "degC",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 2
+                },
+                "timeOffset": "PT18H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "1",
+                "qualityCode": 2
+            },
+            {
+                "elementId": "sum(precipitation_amount P1D)",
+                "value": 0,
+                "unit": "mm",
+                "timeOffset": "PT6H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 2
+            },
+            {
+                "elementId": "max(wind_speed P1D)",
+                "value": 10,
+                "unit": "m/s",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 10
+                },
+                "timeOffset": "PT0H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 2
+            }
+        ]
+    },
+    {
+        "sourceId": "SN5590:0",
+        "referenceTime": "2011-01-01T00:00:00.000Z",
+        "observations": [
+            {
+                "elementId": "min(air_temperature P1D)",
+                "value": -7.7,
+                "unit": "degC",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 2
+                },
+                "timeOffset": "PT18H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 2
+            },
+            {
+                "elementId": "mean(air_temperature P1D)",
+                "value": -3.7,
+                "unit": "degC",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 2
+                },
+                "timeOffset": "PT0H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 0
+            },
+            {
+                "elementId": "max(air_temperature P1D)",
+                "value": 0.8,
+                "unit": "degC",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 2
+                },
+                "timeOffset": "PT18H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 2
+            },
+            {
+                "elementId": "sum(precipitation_amount P1D)",
+                "value": 0.6,
+                "unit": "mm",
+                "timeOffset": "PT6H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 2
+            },
+            {
+                "elementId": "max(wind_speed P1D)",
+                "value": 5.9,
+                "unit": "m/s",
+                "level": {
+                    "levelType": "height_above_ground",
+                    "unit": "m",
+                    "value": 10
+                },
+                "timeOffset": "PT0H",
+                "timeResolution": "P1D",
+                "timeSeriesId": 0,
+                "performanceCategory": "C",
+                "exposureCategory": "2",
+                "qualityCode": 2
+            }
+        ]
+    }
+]

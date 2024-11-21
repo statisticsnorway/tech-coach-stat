@@ -54,7 +54,8 @@ def process_weather_stations(source_file: Path | str, target_dir: Path | None) -
             "wmoId",
             "icaoCodes",
             "shipCodes",
-        ]
+        ],
+        errors="ignore",
     )
 
     # Convert datatypes
@@ -94,7 +95,8 @@ def process_observations(source_file: Path | str, target_dir: Path | None) -> No
             "level.levelType",
             "level.unit",
             "level.value",
-        ]
+        ],
+        errors="ignore",
     )
 
     # Convert datatypes

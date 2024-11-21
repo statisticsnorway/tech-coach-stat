@@ -26,7 +26,7 @@ def test_daplalab_files_env(daplalab_files_env) -> None:
 
     # Check variable substitution
     file = settings.weather_stations_kildedata_file
-    assert file == Path(r"/buckets/kilde/frost/weather_stations_v1.json")
+    assert file == Path(r"/buckets/kilde/metstat/frost/weather_stations_v1.json")
 
 
 def test_local_files_env(local_files_env) -> None:
@@ -39,7 +39,7 @@ def test_local_files_env(local_files_env) -> None:
     lf_result = settings.weather_stations_kildedata_file
     lf_facit = (
         Path(__file__).parent
-        / Path(r"../data/kildedata/frost/weather_stations_v1.json")
+        / Path(r"../data/metstat/kildedata/frost/weather_stations_v1.json")
     ).resolve()
     assert lf_result == lf_facit
 
@@ -50,5 +50,5 @@ def test_default_env(default_env) -> None:
     # Check variable substitution
     assert (
         settings.weather_stations_kildedata_file
-        == "gs://ssb-tip-tutorials-data-kilde-prod/frost/weather_stations_v1.json"
+        == "gs://ssb-tip-tutorials-data-kilde-prod/metstat/frost/weather_stations_v1.json"
     )

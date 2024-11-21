@@ -36,7 +36,7 @@ settings = Dynaconf(
     settings_files=["settings.toml"],
     envvar_prefix="DYNACONF",
     environments=True,
-    env="local_files",  # Change this to switch environment: daplalab_files or local_files
+    env="default",  # Change this to switch environment: daplalab_files or local_files
     validators=[
         Validator(
             "kildedata_root_dir",
