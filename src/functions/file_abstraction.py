@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+import dapla as dp
+import pandas as pd
 from dapla import FileClient
 
 
@@ -50,6 +52,49 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
             return cast(list[dict[str, Any]], json.load(file))
 
 
+def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
+    """Writes a dataframe to a parquet file stored in a GCS bucket or in a local file system.
+
+    Args:
+        filepath: The path to the file where the data should be written.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+        df: The dataframe to be written to the file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    _validate_filepath(filepath)
+    if isinstance(filepath, Path):
+        df.to_parquet(filepath)
+    elif isinstance(filepath, str):
+        dp.write_pandas(df=df, gcs_path=filepath)
+
+
+def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
+    """Read a parquet file stored in a GCS bucket or in a local file system to a dataframe.
+
+    Args:
+        filepath: The path to the file which should be read.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+
+    Returns:
+        The content of the parquet file.
+
+    Raises:
+        TypeError: If the `filepath` is not of type `Path` or `str`.
+    """
+    _validate_filepath(filepath)
+    if isinstance(filepath, Path):
+        return pd.read_parquet(filepath)
+    elif isinstance(filepath, str):
+        result = dp.read_pandas(gcs_path=filepath)
+        if not isinstance(result, pd.DataFrame):
+            raise TypeError("Expected a pandas DataFrame but got a different type")
+        return result
+
+
 def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
     """Add a filename to a filepath, handling both filepath as Path and str.
 
@@ -70,6 +115,34 @@ def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
         return filepath / filename
     elif isinstance(filepath, str):
         return f"{filepath}/{filename}"
+
+
+def create_dir_if_not_exist(directory: Path | str) -> None:
+    """Create directory if it does not exist, handling both directory as Path and str.
+
+    The function handles the case on DaplaLab where the first two levels of the
+    directory path are read-only, for example `/bucket/produkt`.
+
+    If the type is `str`, that means representing a path in a GCS bucket, there is
+    no need to do anything. Since directories does not exist in a bucket.
+
+    Args:
+        directory: The directory to check or create.
+            Use the `pathlib.Path` type if it is a file on a file system.
+            Use the `str` type if it is a file stored in a GCS bucket.
+    """
+    if isinstance(directory, Path):
+        if str(directory).startswith("/buckets"):
+            parts = directory.parts
+            if len(parts) < 3:
+                raise ValueError("The provided path must have at least three levels.")
+
+            # Construct the writable path starting from the third level
+            writable_path = Path(*parts[:2]) / Path(*parts[2:])
+            if not writable_path.exists():
+                writable_path.mkdir(parents=True, exist_ok=True)
+        else:
+            directory.mkdir(parents=True, exist_ok=True)
 
 
 def _validate_filepath(filepath: Path | str) -> None:
