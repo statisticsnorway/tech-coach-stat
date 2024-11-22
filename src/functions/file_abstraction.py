@@ -89,7 +89,10 @@ def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
     if isinstance(filepath, Path):
         return pd.read_parquet(filepath)
     elif isinstance(filepath, str):
-        return dp.read_pandas(gcs_path=filepath)
+        result = dp.read_pandas(gcs_path=filepath)
+        if not isinstance(result, pd.DataFrame):
+            raise TypeError("Expected a pandas DataFrame but got a different type")
+        return result
 
 
 def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:

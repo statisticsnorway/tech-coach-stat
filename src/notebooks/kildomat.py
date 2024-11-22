@@ -125,13 +125,17 @@ def get_target_filepath(source_file: Path | str, target_dir: Path | None) -> Pat
     Returns:
         The target file path with the converted file extension and in the correct location.
     """
-    if target_dir:
-        target_filepath = target_dir / source_file.with_suffix(".parquet").name
-    else:
+    target_filepath: Path | str
+
+    if isinstance(source_file, str):
         target_bucket = "gs://ssb-tip-tutorials-data-produkt-prod"
         folder = "tip-tutorials/inndata/temp/pre-inndata"
         target_filename = source_file.split("/")[-1].replace("json", "parquet")
         target_filepath = f"{target_bucket}/{folder}/{target_filename}"
+    elif target_dir and isinstance(source_file, Path):
+        target_filepath = target_dir / source_file.with_suffix(".parquet").name
+    else:
+        raise ValueError("Invalid combination of source_file and target_dir")
 
     logging.info(f"Target file: {target_filepath}")
     return target_filepath
