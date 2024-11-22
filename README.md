@@ -30,17 +30,34 @@ Til nå viser repoet:
 - Håndtering av hemmeligheter
 - Bruk av konfigurasjonsfiler ved hjelp av [Dynaconf]. Filstier, perioder osv. legges
   in konfigurasjonsfil i stedet for å hardkodes i hver enkelt notebook.
-- Versjonering av filer
+- Versjonering av filer (delvis)
 - Bruk av kodekvalitetsverktøy
 - Organisering i form av funksjoner og automatisert kjøring av disse.
 - Enhetstesting, det vil si testing av logikken i funksjonene.
 - Automatisert testing ved hjelp av GitHub Actions
-- Datatilstander: Fram til ferdige kildedata
+- Kildomaten
+- Datatilstander: Fram til pre-inndata
 
 Det neste på blokka:
 
-- Kildomaten
-- Datatilstand: Fram til tilstand pre-inndata.
+- Datatilstand: Fram til inndata.
+
+## Konfigurasjonsfil og miljøer
+
+I `config`-katalogen ligger det `settings.toml`-fil hvor man setter opp felles
+konfigurasjon. Der definerer man blant annet navn på dapla-team, kortnavn på
+statistikken, filstier, perioder osv. Den definerer tre "miljøer":
+
+- **default:** Bruk av bøtter, enten på gamle Dapla eller på DaplaLab
+- **daplalab_files:** Bruk bøtter montert som filer på DaplaLab
+- **local_files:** Bruk av lokale filer under en `data`-katalog i repoet.
+
+Valg av miljø gjør man i filen `src/functions/config.py`.
+
+I koden brukes det gjennomgående type `str` for å angi filstier i bøtter,
+og type `pathlib.Path` for å angi stier til filer på et filsystem.
+Funksjonene som bruker filstier er generelle, og sjekker om filsti-typen er `str`
+eller `pathlib.Path` for å bestemme hvilken implementasjon som skal velges.
 
 ## Hvordan komme i gang?
 
@@ -72,7 +89,7 @@ Hvis du vil teste det hos deg, så sett `env="local_files"` i fila
 
 Nå er alt klart til å kjøre koden.
 
-Foreløpig er det bare datafangst som er på plass.
+Foreløpig er det bare det fra datafangst og fram til pre-inndata som er på plass.
 
 Kjør filen `src/notebooks/collect_data.py` enten ved å åpne den i vscode eller Jupyter,
 og kjør den derfra. Eller fra kommandolinja:
