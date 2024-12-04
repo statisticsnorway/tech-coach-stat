@@ -10,6 +10,7 @@ from typing import cast
 
 import requests
 from dotenv import load_dotenv
+from google.cloud import secretmanager
 
 from functions.config import settings
 from functions.file_abstraction import add_filename_to_path
@@ -99,13 +100,31 @@ def frost_client_id() -> str:
         The frost_client_id secret
 
     Raises:
-        RuntimeError: If the environment variable is not defined..
+        RuntimeError: If the environment variable is not defined.
     """
     load_dotenv()
     client_id = os.getenv("FROST_CLIENT_ID")
     if client_id is None:
         raise RuntimeError("FROST_CLIENT_ID environment variable is not defined")
     return client_id
+
+
+def frost_client_id_from_gsm() -> str:
+    """Get the frost_client_id secret from Google Secret Manager.
+
+    Returns:
+        The frost_client_id secret
+
+    Raises:
+        RuntimeError: If the secret is not defined.
+    """
+    secret_id = "FROST_CLIENT_ID"
+    project_id = "tip-tutorials-p-mb"
+    secret_path = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+
+    client = secretmanager.SecretManagerServiceClient()
+    response = client.access_secret_version(name=secret_path)
+    return response.payload.data.decode("UTF-8")
 
 
 def fetch_data(endpoint: str, parameters: dict[str, str]) -> list[dict[str, Any]]:
@@ -125,7 +144,7 @@ def fetch_data(endpoint: str, parameters: dict[str, str]) -> list[dict[str, Any]
     Raises:
         RuntimeError: If the response status code is not OK (200).
     """
-    response = requests.get(endpoint, parameters, auth=(frost_client_id(), ""))
+    response = requests.get(endpoint, parameters, auth=(frost_client_id_from_gsm(), ""))
     response_data = response.json()
     if response.status_code != 200:
         raise RuntimeError(
