@@ -6,7 +6,7 @@ It requires that the environment `local_files` in `config.py` is used.
 
 import logging
 
-from kildomat import main
+from b_kildomat import main
 
 from functions.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
