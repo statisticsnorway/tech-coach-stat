@@ -17,6 +17,8 @@ dapla-toolbelt = ">=1.3.2"
 ipykernel = ">=6.15.3"
 python-dotenv = ">=1.0.1"
 dynaconf = ">=3.2.6"
+ssb-klass-python = ">=0.0.11"
+pandera = {extras = ["mypy"], version = ">=0.21.1"}
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["jupyter"], version = ">=24.4.2"}
