@@ -20,6 +20,7 @@ def run_all() -> None:
     if settings.env_for_dynaconf != "local_files":
         raise RuntimeError("Kildomat_local only works when environment is local_files")
 
+    print("Running kildomat_local.py")
     source_dir = settings.kildedata_root_dir
     logging.info(f"Scanning files in directory: {source_dir}")
     target_dir = settings.pre_inndata_dir

@@ -176,6 +176,7 @@ def run_all() -> None:
     """Run the code in this module."""
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
+    print(f"Using environment: {settings.env_for_dynaconf}")
     print("Start collecting data.")
     weather_station_list = get_weather_stations()
     selected_weather_station_ids = get_weather_stations_ids(
