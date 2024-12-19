@@ -3,6 +3,7 @@ import pandera as pa
 
 from functions.config import settings
 from functions.file_abstraction import read_parquet_file
+from functions.timeit import timeit
 from functions.versions import get_latest_file_version
 from schemas.weather_station_schemas import WeatherStationInputSchema
 
@@ -24,6 +25,7 @@ def get_latest_weather_stations() -> pd.DataFrame:
         raise FileNotFoundError(f"File {latest_file!s} not found or not readable")
 
 
+@timeit
 def validate_weather_stations_input(ws_df: pd.DataFrame) -> None:
     """Validate weather stations pre-inndata dataframe."""
     try:
