@@ -1,10 +1,14 @@
-from functools import lru_cache
+from functools import cache
 
 import pandera as pa
 from klass import KlassClassification
 from pandera import DataFrameModel
 from pandera import Field
 from pandera.typing import Series
+
+
+komm_nr_klass_id = "131"
+fylke_nr_klass_id = "104"
 
 
 class WeatherStationInputSchema(DataFrameModel):
@@ -16,18 +20,18 @@ class WeatherStationInputSchema(DataFrameModel):
     komm_nr: Series[str]
     fylke_nr: Series[str]
 
-    @pa.check("komm_nr", element_wise=True)
-    def check_valid_komm_nr_ids(cls, value: str) -> bool:
+    @pa.check("komm_nr")
+    def check_valid_komm_nr_ids(cls, ids: Series[str]) -> Series[bool]:
         """Custom check for valid komm_nr IDs."""
-        return value in get_valid_klass_ids("131")
+        return Series(ids.isin(get_valid_klass_ids(komm_nr_klass_id)))
 
-    @pa.check("fylke_nr", element_wise=True)
-    def check_valid_fylke_nr_ids(cls, value: str) -> bool:
+    @pa.check("fylke_nr")
+    def check_valid_fylke_nr_ids(cls, ids: Series[str]) -> Series[bool]:
         """Custom check for valid fylke_nr IDs."""
-        return value in get_valid_klass_ids("104")
+        return Series(ids.isin(get_valid_klass_ids(fylke_nr_klass_id)))
 
 
-@lru_cache(maxsize=1)  # Cache the result of the first call to this function
+@cache  # Cache the result of the calls to this function
 def get_valid_klass_ids(klass_id: str) -> list[str]:
     """Use Klass to check for valid keys like komm_nr and fylke_nr."""
     catalog = KlassClassification(klass_id)
