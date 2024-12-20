@@ -4,6 +4,7 @@
 #
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
+import json
 import os
 from typing import Any
 from typing import cast
@@ -191,7 +192,30 @@ def get_weather_stations_ids(
     return [name_to_id[name] for name in weather_stations_names]
 
 
+def get_service_account_gsm(secret_id: str, project_id: str) -> dict[str, str]:
+    """Get a service account key stored in Google Secret Manager.
+
+    Args:
+        secret_id: The name of the secret as stored in Google Secret Manager.
+        project_id: The GCP project id.
+
+    Returns:
+        The service account.
+    """
+    client = secretmanager.SecretManagerServiceClient()
+    secret_path = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
+
+    response = client.access_secret_version(name=secret_path)
+    secret_payload = response.payload.data.decode("UTF-8")
+    return json.loads(secret_payload)
+
+
 def run_all() -> None:
+
+    project_id = "tip-tutorials-p-mb"
+    secret_id = "TOG_TOKEN"
+    sa = get_service_account_gsm(secret_id, project_id)
+
     """Run the code in this module."""
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
