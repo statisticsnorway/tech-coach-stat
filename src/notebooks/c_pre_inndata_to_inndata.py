@@ -5,7 +5,7 @@ from functions.config import settings
 from functions.file_abstraction import read_parquet_file
 from functions.timeit import timeit
 from functions.versions import get_latest_file_version
-from schemas.weather_station_schemas import WeatherStationInputSchema
+from schemas.weather_station_schemas import WeatherStationInputSchema2
 
 
 def get_latest_weather_stations() -> pd.DataFrame:
@@ -29,7 +29,7 @@ def get_latest_weather_stations() -> pd.DataFrame:
 def validate_weather_stations_input(ws_df: pd.DataFrame) -> None:
     """Validate weather stations pre-inndata dataframe."""
     try:
-        WeatherStationInputSchema.validate(ws_df, lazy=True)
+        WeatherStationInputSchema2.validate(ws_df, lazy=True)
     except pa.errors.SchemaErrors as errors:
         print(errors)
 
@@ -48,7 +48,7 @@ ws_df = get_latest_weather_stations()
 # Also convert type to from int to str with leading zeros, as required by Klass.
 # See https://ssbno.sharepoint.com/sites/Avdelingerutvalgograd/SitePages/Vedtak-fra-Standardutvalget.aspx#standardnavn-for-enhetstypeidentifikatorer
 
-ws_df["komm_nr"] = ws_df["municipalityId"].astype(str).str.zfill(4)
-ws_df["fylke_nr"] = ws_df["countyId"].astype(str).str.zfill(2)
+ws_df["municipality_id"] = ws_df["municipalityId"].astype(str).str.zfill(4)
+ws_df["county_id"] = ws_df["countyId"].astype(str).str.zfill(2)
 
 validate_weather_stations_input(ws_df)
