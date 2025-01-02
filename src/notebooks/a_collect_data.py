@@ -5,6 +5,7 @@
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
 import os
+from pathlib import Path
 from typing import Any
 from typing import cast
 
@@ -187,6 +188,7 @@ def get_weather_stations_ids(
 
 def run_all() -> None:
     """Run the code in this module."""
+    print(f"Running {Path(__file__).name}")
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
     print(f"Using environment: {settings.env_for_dynaconf}")

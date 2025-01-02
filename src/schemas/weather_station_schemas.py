@@ -7,42 +7,37 @@ from pandera import Field
 from pandera.typing import Series
 
 
-municipality_class_id = "131"
-county_class_id = "104"
+komm_nr_klass_id = "131"
+fylke_nr_klass_id = "104"
 
 
-class WeatherStationInputSchema2(DataFrameModel):
-    id: Series[str] = Field(str_startswith="SN", nullable=False, unique=True)
-    municipality_id: Series[str] = Field(str_length={"min_value": 4, "max_value": 4})
-    county_id: Series[str] = Field(str_length={"min_value": 2, "max_value": 2})
-
-    @pa.check("municipality_id")
-    def check_valid_municipality_id(cls, ids: Series[str]) -> Series[bool]:
-        return Series(ids.isin(get_valid_class_ids(municipality_class_id)))
-
-    @pa.check("county_id")
-    def check_valid_county_ids(cls, ids: Series[str]) -> Series[bool]:
-        return Series(ids.isin(get_valid_class_ids(county_class_id)))
-
-    @pa.check("county_id", class_id="131")
-    def check_valid_county_ids(cls, ids: Series[str]) -> Series[bool]:
-        return Series(ids.isin(get_valid_class_ids(county_class_id)))
-
-    @pa.check("county_id", class_id="104")
-    def check_valid_county_ids(cls, ids: Series[str], **kwargs) -> Series[bool]:
-        class_id = kwargs.get("class_id")
-        print(f"{class_id=}")
-        return Series(ids.isin(get_valid_class_ids(class_id)))
-
-
-class WeatherStationInputSchema(DataFrameModel):
-    """Schema for validating weather stations pre-inndata dataframe."""
+class WeatherStationInndataSchema(DataFrameModel):
+    """Schema for validating weather stations inndata dataframe."""
 
     id: Series[str] = Field(str_startswith="SN", nullable=False, unique=True)
-    municipalityId: Series[int] = Field(in_range={"min_value": 0, "max_value": 9999})
-    countyId: Series[int] = Field(in_range={"min_value": 0, "max_value": 99})
+    name: Series[str]
+    shortName: Series[str]
+    municipalityId: Series[int] = Field(ge=0, le=9999, nullable=True)
+    municipality: Series[str] = Field(nullable=True)
+    komm_nr: Series[str] = Field(nullable=True)
+    countyId: Series[int] = Field(ge=0, le=99, nullable=True)
+    county: Series[str] = Field(nullable=True)
+    fylke_nr: Series[str] = Field(nullable=True)
+    countryCode: Series[str] = Field(str_length={"min_value": 2, "max_value": 2})
+    masl: Series[int] = Field(gt=-500, le=9999, nullable=True)
+    coordinates: Series[str] = pa.Field(alias="geometry.coordinates", nullable=True)
+
+
+class WeatherStationKlargjortSchema(DataFrameModel):
+    """Schema for validating weather stations klargjort dataframe."""
+
+    id: Series[str] = Field(str_startswith="SN", nullable=False, unique=True)
+    name: Series[str]
+    shortName: Series[str]
     komm_nr: Series[str]
     fylke_nr: Series[str]
+    countryCode: Series[str] = Field(str_length={"min_value": 2, "max_value": 2})
+    masl: Series[int] = Field(gt=-500, le=9999, nullable=True)
 
     @pa.check("komm_nr")
     def check_valid_komm_nr_ids(cls, ids: Series[str]) -> Series[bool]:
@@ -56,6 +51,7 @@ class WeatherStationInputSchema(DataFrameModel):
 
 
 @cache  # Cache the result of the calls to this function
-def get_valid_class_ids(class_id: str) -> list[str]:
-    catalog = KlassClassification(class_id)
+def get_valid_klass_ids(klass_id: str) -> list[str]:
+    """Use Klass to check for valid keys like komm_nr and fylke_nr."""
+    catalog = KlassClassification(klass_id)
     return list(catalog.get_codes().to_dict().keys())

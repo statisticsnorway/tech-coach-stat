@@ -7,7 +7,7 @@ the iac-project for the Dapla team.
 The kildomat service requires exactly one argument in the main function, so change
 the start of the main function the following way after copying the file:
   def main(source_file: Path | str) -> None:
-      target_dir = None  # Fix for kildomat requireing just one argument
+      target_dir = None  # Fix for kildomat requiring just one argument
 
 When running locally or for testing, use the kildomat_local.py file instead.
 """
@@ -59,6 +59,8 @@ def process_weather_stations(source_file: Path | str, target_dir: Path | None) -
             "wmoId",
             "icaoCodes",
             "shipCodes",
+            "@type",
+            "stationHolders",
         ],
         errors="ignore",
     )

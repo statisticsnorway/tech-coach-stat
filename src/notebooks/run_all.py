@@ -20,6 +20,7 @@
 # %%
 import a_collect_data
 import b_kildomat_local
+import c_pre_inndata_to_inndata
 
 
 # %%
@@ -27,6 +28,7 @@ def run_all() -> None:
     """Run all files."""
     a_collect_data.run_all()
     b_kildomat_local.run_all()
+    c_pre_inndata_to_inndata.run_all()
 
 
 # %%

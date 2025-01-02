@@ -5,6 +5,7 @@ It requires that the environment `local_files` in `config.py` is used.
 """
 
 import logging
+from pathlib import Path
 
 from b_kildomat import main
 
@@ -17,6 +18,7 @@ def run_all() -> None:
 
     Scan the kildedata directory for files and feed each of them to the kildomat.
     """
+    print(f"Running {Path(__file__).name}")
     if settings.env_for_dynaconf != "local_files":
         raise RuntimeError("Kildomat_local only works when environment is local_files")
 
