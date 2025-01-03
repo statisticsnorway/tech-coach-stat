@@ -10,6 +10,7 @@ from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import read_parquet_file
 from functions.file_abstraction import write_parquet_file
 from functions.versions import get_latest_file_version
+from schemas.observation_schemas import ObservationInndataSchema
 from schemas.weather_station_schemas import WeatherStationInndataSchema
 
 
@@ -32,7 +33,7 @@ def get_latest_weather_stations() -> pd.DataFrame:
 
 
 @pa.check_types(lazy=True)
-def transform_to_inndata(df: pd.DataFrame) -> DataFrame[WeatherStationInndataSchema]:
+def transform_ws_to_inndata(df: pd.DataFrame) -> DataFrame[WeatherStationInndataSchema]:
     """Transforms a weather stations dataframe to inndata and validates the data.
 
     Convert municipalityId and countyId to column names defined by Standardutvalget.
@@ -54,6 +55,22 @@ def transform_to_inndata(df: pd.DataFrame) -> DataFrame[WeatherStationInndataSch
 
     # The pipe is used to cast the data type so that mypy understands the type
     return df.pipe(DataFrame[WeatherStationInndataSchema])
+
+
+@pa.check_types(lazy=True)
+def transform_obs_to_inndata(df: pd.DataFrame) -> DataFrame[ObservationInndataSchema]:
+    """Transforms an observations dataframe to inndata and validates the data.
+
+    The transformed dataframe is validated according to the ObservationInndataSchema.
+
+    Args:
+        df: A DataFrame containing observation records.
+
+    Returns:
+        Transformed DataFrame adhering to the ObservationInndataSchema.
+    """
+    print(df.dtypes)
+    return df.pipe(DataFrame[ObservationInndataSchema])
 
 
 def handle_validation_errors(df: pd.DataFrame, errors: pa.errors.SchemaErrors) -> None:
@@ -79,15 +96,25 @@ def handle_validation_errors(df: pd.DataFrame, errors: pa.errors.SchemaErrors) -
 def run_all() -> None:
     """Run the code in this module."""
     print(f"Running {Path(__file__).name}")
+
+    # Weather stations
     weather_stations = get_latest_weather_stations()
     target_dir = settings.inndata_dir
     try:
-        inndata_df = transform_to_inndata(weather_stations)
+        inndata_df = transform_ws_to_inndata(weather_stations)
         create_dir_if_not_exist(target_dir)
         target_path = add_filename_to_path(target_dir, "weather_stations.parquet")
         write_parquet_file(target_path, inndata_df)
     except pa.errors.SchemaErrors as errors:
         handle_validation_errors(weather_stations, errors)
+
+    # Observations
+    source_dir = settings.pre_inndata_dir
+    source_path = add_filename_to_path(
+        source_dir, "observations_p2011-01-01_p2011-12-31.parquet"
+    )
+    obs_df = read_parquet_file(source_path)
+    transform_obs_to_inndata(obs_df)
 
 
 if __name__ == "__main__":

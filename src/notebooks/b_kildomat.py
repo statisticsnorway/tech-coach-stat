@@ -107,7 +107,7 @@ def process_observations(source_file: Path | str, target_dir: Path | None) -> No
     )
 
     # Convert datatypes
-    df["referenceTime"] = pd.to_datetime(df["referenceTime"])
+    df["referenceTime"] = pd.to_datetime(df["referenceTime"], utc=True)
     df = df.astype(
         {col: "string" for col in df.select_dtypes(include="object").columns}
     )
