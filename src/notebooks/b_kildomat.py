@@ -131,7 +131,7 @@ def get_target_filepath(source_file: Path | str, target_dir: Path | None) -> Pat
 
     if isinstance(source_file, str):
         target_bucket = "gs://ssb-tip-tutorials-data-produkt-prod"
-        folder = "tip-tutorials/inndata/temp/pre-inndata"
+        folder = "metstat/inndata/temp/pre-inndata/frost"
         target_filename = source_file.split("/")[-1].replace("json", "parquet")
         target_filepath = f"{target_bucket}/{folder}/{target_filename}"
     elif target_dir and isinstance(source_file, Path):

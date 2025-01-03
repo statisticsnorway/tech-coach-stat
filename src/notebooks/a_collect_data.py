@@ -6,6 +6,7 @@
 
 import os
 import re
+from collections.abc import Iterable
 from datetime import date
 from datetime import timedelta
 from pathlib import Path
@@ -212,26 +213,27 @@ def get_latest_observation_date(directory: Path | str) -> date | None:
     Returns:
         The latest date found in the filenames or `None` if no valid dates are found.
     """
-    latest_date = None
-    if isinstance(directory, Path) and directory.is_dir():
-        for filepath in directory.glob("observations*"):
-            if filepath.is_file():
-                extracted_date = extract_latest_date_from_filename(filepath.name)
-                if extracted_date and (
-                    latest_date is None or extracted_date > latest_date
-                ):
-                    latest_date = extracted_date
-    elif isinstance(directory, str):
+    OBSERVATION_FILE_PATTERN = "observations*"
+
+    if isinstance(directory, Path):
+        return find_latest_date_in_files(directory.glob(OBSERVATION_FILE_PATTERN))
+
+    if isinstance(directory, str):
         fs = FileClient.get_gcs_file_system()
-        glob_pattern = f"{directory}/observations*"
-        files = fs.glob(glob_pattern)
-        for file in files:
-            if isinstance(file, str):
-                extracted_date = extract_latest_date_from_filename(file)
-                if extracted_date and (
-                    latest_date is None or extracted_date > latest_date
-                ):
-                    latest_date = extracted_date
+        gcs_files = fs.glob(f"{directory}/{OBSERVATION_FILE_PATTERN}")
+        return find_latest_date_in_files(gcs_files)
+
+    return None  # type: ignore[unreachable]
+
+
+def find_latest_date_in_files(files: Iterable[str] | Iterable[Path]) -> date | None:
+    """Extract the latest date from a given list of file paths or filenames."""
+    latest_date = None
+    for file in files:
+        file_name = file.name if isinstance(file, Path) else file
+        extracted_date = extract_latest_date_from_filename(file_name)
+        if extracted_date and (latest_date is None or extracted_date > latest_date):  # type: ignore[unreachable]
+            latest_date = extracted_date
     return latest_date
 
 
@@ -248,10 +250,12 @@ def extract_latest_date_from_filename(filename: str) -> date | None:
     Returns:
         The latest date extracted from the filename or `None` if no match is found.
     """
+    # sourcery skip: use-named-expression
+
     # Regular expression to find the second date in filename (format YYYY-MM-DD)
     match = re.search(r"_p\d{4}-\d{2}-\d{2}_p(\d{4}-\d{2}-\d{2})", filename)
     if match:
-        latest_date_str = match.group(1)
+        latest_date_str = match[1]
         return date.fromisoformat(latest_date_str)
     else:
         return None
