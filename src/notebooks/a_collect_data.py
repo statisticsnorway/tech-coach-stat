@@ -5,6 +5,9 @@
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
 import os
+import re
+from datetime import date
+from datetime import timedelta
 from pathlib import Path
 from typing import Any
 from typing import cast
@@ -68,6 +71,15 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
     Returns:
         A list of dictionaries containing the weather observation data.
     """
+    if latest_date := get_latest_observation_date(settings.kildedata_root_dir):
+        from_date_str = (latest_date + timedelta(days=1)).isoformat()
+    else:
+        from_date_str = settings.collect_from_date
+    today_str = date.today().isoformat()
+    if from_date_str == today_str:
+        print("No new observations to collect.")
+        return []
+
     endpoint = "https://frost.met.no/observations/v0.jsonld"
     parameters = {
         "sources": ",".join(source_ids_),
@@ -78,7 +90,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
             "sum(precipitation_amount P1D),"
             "max(wind_speed P1D)"
         ),
-        "referencetime": f"{settings.collect_from_date}/{settings.collect_to_date}",
+        "referencetime": f"{from_date_str}/{today_str}",
         "levels": "default",
         "timeoffsets": "default",
     }
@@ -184,6 +196,52 @@ def get_weather_stations_ids(
         if "name" in item and "id" in item
     }
     return [name_to_id[name] for name in weather_stations_names]
+
+
+def get_latest_observation_date(directory: Path | str) -> date | None:
+    """Find the latest observation date from filenames in the given directory.
+
+    It is based on the file name pattern observations_pYYYY-MM-DD_pYYYY-MM-DD,
+    where the last YYYY-MM-DD is the date of the latest observation.
+
+    Args:
+        directory: A path to the directory containing observation files.
+
+    Returns:
+        The latest date found in the filenames or `None` if no valid dates are found.
+    """
+    latest_date = None
+    if isinstance(directory, Path) and directory.is_dir():
+        for filepath in directory.glob("observations*"):
+            if filepath.is_file():
+                extracted_date = extract_latest_date_from_filename(filepath.name)
+                if extracted_date and (
+                    latest_date is None or extracted_date > latest_date
+                ):
+                    latest_date = extracted_date
+    return latest_date
+
+
+def extract_latest_date_from_filename(filename: str) -> date | None:
+    """Extracts the latest date provided in the given filename.
+
+    It is based on the file name pattern ending in `_pYYYY-MM-DD_pYYYY-MM-DD`,
+    where the last `YYYY-MM-DD` is the date of the latest observation.
+
+    Args:
+        filename: The filename containing date information in the format
+            `_pYYYY-MM-DD_pYYYY-MM-DD`.
+
+    Returns:
+        The latest date extracted from the filename or `None` if no match is found.
+    """
+    # Regular expression to find the second date in filename (format YYYY-MM-DD)
+    match = re.search(r"_p\d{4}-\d{2}-\d{2}_p(\d{4}-\d{2}-\d{2})", filename)
+    if match:
+        latest_date_str = match.group(1)
+        return date.fromisoformat(latest_date_str)
+    else:
+        return None
 
 
 def run_all() -> None:
