@@ -13,6 +13,7 @@ from typing import Any
 from typing import cast
 
 import requests
+from dapla import FileClient
 from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
 from google.auth.exceptions import DefaultCredentialsError
@@ -75,6 +76,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
         from_date_str = (latest_date + timedelta(days=1)).isoformat()
     else:
         from_date_str = settings.collect_from_date
+
     today_str = date.today().isoformat()
     if from_date_str == today_str:
         print("No new observations to collect.")
@@ -215,6 +217,17 @@ def get_latest_observation_date(directory: Path | str) -> date | None:
         for filepath in directory.glob("observations*"):
             if filepath.is_file():
                 extracted_date = extract_latest_date_from_filename(filepath.name)
+                if extracted_date and (
+                    latest_date is None or extracted_date > latest_date
+                ):
+                    latest_date = extracted_date
+    elif isinstance(directory, str):
+        fs = FileClient.get_gcs_file_system()
+        glob_pattern = f"{directory}/observations*"
+        files = fs.glob(glob_pattern)
+        for file in files:
+            if isinstance(file, str):
+                extracted_date = extract_latest_date_from_filename(file)
                 if extracted_date and (
                     latest_date is None or extracted_date > latest_date
                 ):
