@@ -4,15 +4,14 @@
 #
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
-import json
 import os
 from typing import Any
 from typing import cast
 
 import requests
+from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
 from google.auth.exceptions import DefaultCredentialsError
-from google.cloud import secretmanager
 
 from functions.config import settings
 from functions.file_abstraction import add_filename_to_path
@@ -107,24 +106,19 @@ def frost_client_id() -> str:
     """
     secret_id = "FROST_CLIENT_ID"
     project_id = "tip-tutorials-p-mb"
-    secret_path = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
 
     try:
-        client = secretmanager.SecretManagerServiceClient()
-        response = client.access_secret_version(name=secret_path)
+        client_id = get_secret_version(project_id, secret_id)
     except DefaultCredentialsError as e:
-        print(
-            f"Error: Unable to find default credentials. {e} Fallback to use .env file."
-        )
+        print(f"Error: Unable to find GSM credentials. {e} Fallback to use .env file.")
+
         load_dotenv()
         client_id = os.getenv(secret_id)
         if client_id is None:
             raise RuntimeError(
                 f"{secret_id} environment variable is not defined"
             ) from e
-        return client_id
-
-    return response.payload.data.decode("UTF-8")
+    return client_id
 
 
 def fetch_data(endpoint: str, parameters: dict[str, str]) -> list[dict[str, Any]]:
@@ -189,24 +183,6 @@ def get_weather_stations_ids(
         if "name" in item and "id" in item
     }
     return [name_to_id[name] for name in weather_stations_names]
-
-
-def get_service_account_gsm(secret_id: str, project_id: str) -> dict[str, str]:
-    """Get a service account key stored in Google Secret Manager.
-
-    Args:
-        secret_id: The name of the secret as stored in Google Secret Manager.
-        project_id: The GCP project id.
-
-    Returns:
-        The service account.
-    """
-    client = secretmanager.SecretManagerServiceClient()
-    secret_path = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
-
-    response = client.access_secret_version(name=secret_path)
-    secret_payload = response.payload.data.decode("UTF-8")
-    return json.loads(secret_payload)
 
 
 def run_all() -> None:
