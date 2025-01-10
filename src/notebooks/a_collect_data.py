@@ -9,7 +9,9 @@ from typing import Any
 from typing import cast
 
 import requests
+from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
+from google.auth.exceptions import DefaultCredentialsError
 
 from functions.config import settings
 from functions.file_abstraction import add_filename_to_path
@@ -91,20 +93,31 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
 
 
 def frost_client_id() -> str:
-    """Get the frost_client_id secret.
+    """Get the frost_client_id from Google Secret Manager or environment variable.
 
-    Read the client id from environment variable or .env file.
+    Try to read the secret from Google Secret Manager first, and if it fails:
+    fallback to read it from environment variable or .env file.
 
     Returns:
         The frost_client_id secret
 
     Raises:
-        RuntimeError: If the environment variable is not defined..
+        RuntimeError: If the environment variable is not defined.
     """
-    load_dotenv()
-    client_id = os.getenv("FROST_CLIENT_ID")
-    if client_id is None:
-        raise RuntimeError("FROST_CLIENT_ID environment variable is not defined")
+    secret_id = "FROST_CLIENT_ID"
+    project_id = "tip-tutorials-p-mb"
+
+    try:
+        client_id = get_secret_version(project_id, secret_id)
+    except DefaultCredentialsError as e:
+        print(f"Error: Unable to find GSM credentials. {e} Fallback to use .env file.")
+
+        load_dotenv()
+        client_id = os.getenv(secret_id)
+        if client_id is None:
+            raise RuntimeError(
+                f"{secret_id} environment variable is not defined"
+            ) from e
     return client_id
 
 
