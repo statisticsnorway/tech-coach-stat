@@ -11,6 +11,7 @@ from typing import cast
 
 import requests
 from dotenv import load_dotenv
+from google.auth.exceptions import DefaultCredentialsError
 from google.cloud import secretmanager
 
 from functions.config import settings
@@ -93,9 +94,10 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
 
 
 def frost_client_id() -> str:
-    """Get the frost_client_id secret.
+    """Get the frost_client_id from Google Secret Manager or environment variable.
 
-    Read the client id from environment variable or .env file.
+    Try to read the secret from Google Secret Manager first, and if it fails:
+    fallback to read it from environment variable or .env file.
 
     Returns:
         The frost_client_id secret
@@ -103,28 +105,25 @@ def frost_client_id() -> str:
     Raises:
         RuntimeError: If the environment variable is not defined.
     """
-    load_dotenv()
-    client_id = os.getenv("FROST_CLIENT_ID")
-    if client_id is None:
-        raise RuntimeError("FROST_CLIENT_ID environment variable is not defined")
-    return client_id
-
-
-def frost_client_id_from_gsm() -> str:
-    """Get the frost_client_id secret from Google Secret Manager.
-
-    Returns:
-        The frost_client_id secret
-
-    Raises:
-        RuntimeError: If the secret is not defined.
-    """
     secret_id = "FROST_CLIENT_ID"
     project_id = "tip-tutorials-p-mb"
     secret_path = f"projects/{project_id}/secrets/{secret_id}/versions/latest"
 
-    client = secretmanager.SecretManagerServiceClient()
-    response = client.access_secret_version(name=secret_path)
+    try:
+        client = secretmanager.SecretManagerServiceClient()
+        response = client.access_secret_version(name=secret_path)
+    except DefaultCredentialsError as e:
+        print(
+            f"Error: Unable to find default credentials. {e} Fallback to use .env file."
+        )
+        load_dotenv()
+        client_id = os.getenv(secret_id)
+        if client_id is None:
+            raise RuntimeError(
+                f"{secret_id} environment variable is not defined"
+            ) from e
+        return client_id
+
     return response.payload.data.decode("UTF-8")
 
 
@@ -145,7 +144,7 @@ def fetch_data(endpoint: str, parameters: dict[str, str]) -> list[dict[str, Any]
     Raises:
         RuntimeError: If the response status code is not OK (200).
     """
-    response = requests.get(endpoint, parameters, auth=(frost_client_id_from_gsm(), ""))
+    response = requests.get(endpoint, parameters, auth=(frost_client_id(), ""))
     response_data = response.json()
     if response.status_code != 200:
         raise RuntimeError(
@@ -211,11 +210,6 @@ def get_service_account_gsm(secret_id: str, project_id: str) -> dict[str, str]:
 
 
 def run_all() -> None:
-
-    project_id = "tip-tutorials-p-mb"
-    secret_id = "TOG_TOKEN"
-    sa = get_service_account_gsm(secret_id, project_id)
-
     """Run the code in this module."""
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
