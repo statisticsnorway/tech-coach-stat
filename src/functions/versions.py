@@ -1,3 +1,9 @@
+"""This module contains abstractions for working with versions in buckets and files.
+
+The datatype `str` is used to represent files and directories in buckets.
+The datatype `pathlib.Path` is used represent files and directories in a file system.
+"""
+
 from pathlib import Path
 
 from ._versions_bucket import get_latest_file_version as get_latest_file_version_bucket

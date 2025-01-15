@@ -124,16 +124,14 @@ def frost_client_id() -> str:
     project_id = "tip-tutorials-p-mb"
 
     try:
-        client_id = get_secret_version(project_id, secret_id)
+        client_id: str | None = get_secret_version(project_id, secret_id)
     except DefaultCredentialsError as e:
         print(f"Error: Unable to find GSM credentials. {e} Fallback to use .env file.")
-
         load_dotenv()
         client_id = os.getenv(secret_id)
-        if client_id is None:
-            raise RuntimeError(
-                f"{secret_id} environment variable is not defined"
-            ) from e
+
+    if client_id is None:
+        raise RuntimeError(f"{secret_id} environment variable is not defined")
     return client_id
 
 

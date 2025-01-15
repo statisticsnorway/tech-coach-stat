@@ -1,7 +1,11 @@
+from datetime import datetime
+from datetime import timedelta
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 import pandera as pa
+from isodate import parse_duration
 from pandera.typing import DataFrame
 
 from functions.config import settings
@@ -69,8 +73,25 @@ def transform_obs_to_inndata(df: pd.DataFrame) -> DataFrame[ObservationInndataSc
     Returns:
         Transformed DataFrame adhering to the ObservationInndataSchema.
     """
-    print(df.dtypes)
+    # Remove everything after the first ':' in sourceId
+    # The weather station is the part before the ':'
+    df["sourceId"] = df["sourceId"].apply(lambda s: s.split(":", 1)[0])
+
+    df["observationTime"] = df.apply(_calc_observation_time, axis=1)
+
+    # Remove unneeded columns, reorder and sort
+    column_order = ["sourceId", "elementId", "observationTime", "value", "unit"]
+    df = df[column_order].sort_values(by=["sourceId", "elementId", "observationTime"])
+    df.reset_index(drop=True, inplace=True)
+
     return df.pipe(DataFrame[ObservationInndataSchema])
+
+
+def _calc_observation_time(row: pd.Series) -> datetime:
+    """Calculate observation time based on referenceTime and timeOffset columns."""
+    reference_time = cast(datetime, row["referenceTime"])
+    time_offset = cast(timedelta, parse_duration(row["timeOffset"]))
+    return reference_time + time_offset
 
 
 def handle_validation_errors(df: pd.DataFrame, errors: pa.errors.SchemaErrors) -> None:
@@ -101,20 +122,26 @@ def run_all() -> None:
     weather_stations = get_latest_weather_stations()
     target_dir = settings.inndata_dir
     try:
-        inndata_df = transform_ws_to_inndata(weather_stations)
+        inndata_ws_df = transform_ws_to_inndata(weather_stations)
         create_dir_if_not_exist(target_dir)
         target_path = add_filename_to_path(target_dir, "weather_stations.parquet")
-        write_parquet_file(target_path, inndata_df)
+        write_parquet_file(target_path, inndata_ws_df)
     except pa.errors.SchemaErrors as errors:
         handle_validation_errors(weather_stations, errors)
 
     # Observations
     source_dir = settings.pre_inndata_dir
-    source_path = add_filename_to_path(
-        source_dir, "observations_p2011-01-01_p2011-12-31.parquet"
+    obs_filename = (
+        "observations_p2011-01-01_p2011-12-31.parquet"  # TODO: Find the latest file
     )
+    source_path = add_filename_to_path(source_dir, obs_filename)
     obs_df = read_parquet_file(source_path)
-    transform_obs_to_inndata(obs_df)
+    try:
+        inndata_obs_df = transform_obs_to_inndata(obs_df)
+        target_path = add_filename_to_path(target_dir, obs_filename)
+        write_parquet_file(target_path, inndata_obs_df)
+    except pa.errors.SchemaErrors as errors:
+        handle_validation_errors(obs_df, errors)
 
 
 if __name__ == "__main__":

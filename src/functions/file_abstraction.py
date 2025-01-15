@@ -1,9 +1,16 @@
+"""This module contains file abstractions for working with buckets and files.
+
+The datatype `str` is used to represent files and directories in buckets.
+The datatype `pathlib.Path` is used represent files and directories in a file system.
+"""
+
 import json
 from pathlib import Path
 from typing import Any
 from typing import cast
 
 import dapla as dp
+import gcsfs
 import pandas as pd
 from dapla import FileClient
 
@@ -143,6 +150,94 @@ def create_dir_if_not_exist(directory: Path | str) -> None:
                 writable_path.mkdir(parents=True, exist_ok=True)
         else:
             directory.mkdir(parents=True, exist_ok=True)
+
+
+def directory_diff(
+    source_dir: Path | str, target_dir: Path | str
+) -> set[Path] | set[str]:
+    """Compares the contents of two directories and identifies files that exist in the source directory but not in the target directory.
+
+    The function supports comparison both for files in a local file system
+    (Paths) and for files in cloud storage buckets (strings).
+
+    The datatype `str` is used to represent directories in buckets.
+    The datatype `pathlib.Path` is used represent directories in a file system.
+    The `source_dir` and `target_dir` must have the same type.
+
+    Args:
+        source_dir: The source directory to compare.
+        target_dir: The target directory to compare.
+
+    Returns:
+        A set of files that are present in the source directory but not in the target directory.
+
+    Raises:
+        ValueError: If either of the provided arguments is not of type Path or str.
+    """
+    if isinstance(source_dir, Path) and isinstance(target_dir, Path):
+        source_file_paths = get_dir_files_filesystem(source_dir)
+        target_file_paths = get_dir_files_filesystem(target_dir)
+        return set(source_file_paths) - set(target_file_paths)
+
+    elif isinstance(source_dir, str) and isinstance(target_dir, str):
+        source_file_strings = get_dir_files_bucket(source_dir)
+        target_file_strings = get_dir_files_bucket(target_dir)
+        return set(source_file_strings) - set(target_file_strings)
+    else:
+        raise ValueError("Both source_dir and target_dir must be of type Path or str.")
+
+
+def get_dir_files_bucket(directory: str) -> list[str]:
+    """Get a list of files within the specified directory in a GCS bucket.
+
+    This function retrieves all files in the provided GCS directory path. It ensures
+    the path ends with a forward slash and that the directory exists before processing.
+    Only files at the given directory level (not within subdirectories) are included
+    in the returned list.
+
+    Args:
+        directory: The GCS bucket directory path. Must end with a forward slash (/).
+
+    Returns:
+        A list of file names within the specified directory.
+
+    Raises:
+        ValueError: If the directory does not end with a forward slash (/).
+        ValueError: If the specified directory does not exist.
+    """
+    if not directory.endswith("/"):
+        raise ValueError(f"{directory} is not a directory. It must have a trailing `/`")
+    fs = gcsfs.GCSFileSystem()
+    if not fs.exists(directory):
+        raise ValueError(f"{directory} does not exist.")
+
+    all_files = fs.ls(directory)
+    return [
+        file
+        for file in all_files
+        if fs.isfile(file) and "/" not in file[len(directory) :]
+    ]
+
+
+def get_dir_files_filesystem(directory: Path) -> list[Path]:
+    """Get a list of files within the specified directory in a local file system.
+
+    This function retrieves all files in the provided directory.
+    Directories or files in subdirectories are excluded from the result.
+
+    Args:
+        directory: The directory to search for files. It must
+            be a valid existing directory.
+
+    Returns:
+        A list of Paths, where each path represents a file in the specified directory.
+
+    Raises:
+        ValueError: If the provided `directory` is not a directory.
+    """
+    if not directory.is_dir():
+        raise ValueError(f"{directory} is not a directory.")
+    return [file for file in directory.iterdir() if file.is_file()]
 
 
 def _validate_filepath(filepath: Path | str) -> None:
