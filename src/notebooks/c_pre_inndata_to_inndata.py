@@ -11,7 +11,9 @@ from pandera.typing import DataFrame
 from functions.config import settings
 from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import create_dir_if_not_exist
+from functions.file_abstraction import directory_diff
 from functions.file_abstraction import read_parquet_file
+from functions.file_abstraction import replace_directory
 from functions.file_abstraction import write_parquet_file
 from functions.versions import get_latest_file_version
 from schemas.observation_schemas import ObservationInndataSchema
@@ -114,34 +116,48 @@ def handle_validation_errors(df: pd.DataFrame, errors: pa.errors.SchemaErrors) -
     print(failed_rows)
 
 
-def run_all() -> None:
-    """Run the code in this module."""
-    print(f"Running {Path(__file__).name}")
-
-    # Weather stations
-    weather_stations = get_latest_weather_stations()
-    target_dir = settings.inndata_dir
+def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -> None:
+    """Process a weather station file."""
+    print(f"Processing file {filepath}")
+    weather_stations = read_parquet_file(filepath)
     try:
         inndata_ws_df = transform_ws_to_inndata(weather_stations)
-        create_dir_if_not_exist(target_dir)
-        target_path = add_filename_to_path(target_dir, "weather_stations.parquet")
+        target_path = replace_directory(filepath, target_dir)
         write_parquet_file(target_path, inndata_ws_df)
+        print(f"Saving file {target_path}")
     except pa.errors.SchemaErrors as errors:
         handle_validation_errors(weather_stations, errors)
 
-    # Observations
-    source_dir = settings.pre_inndata_dir
-    obs_filename = (
-        "observations_p2011-01-01_p2011-12-31.parquet"  # TODO: Find the latest file
-    )
-    source_path = add_filename_to_path(source_dir, obs_filename)
-    obs_df = read_parquet_file(source_path)
+
+def process_observation_file(filepath: Path | str, target_dir: Path | str) -> None:
+    """Process a weather observations file."""
+    print(f"Processing file {filepath}")
+    observations = read_parquet_file(filepath)
     try:
-        inndata_obs_df = transform_obs_to_inndata(obs_df)
-        target_path = add_filename_to_path(target_dir, obs_filename)
+        inndata_obs_df = transform_obs_to_inndata(observations)
+        target_path = replace_directory(filepath, target_dir)
         write_parquet_file(target_path, inndata_obs_df)
+        print(f"Saving file {target_path}")
     except pa.errors.SchemaErrors as errors:
-        handle_validation_errors(obs_df, errors)
+        handle_validation_errors(observations, errors)
+
+
+def run_all() -> None:
+    """Run the code in this module."""
+    print(f"Running {Path(__file__).name}")
+    source_dir = settings.pre_inndata_dir
+    target_dir = settings.inndata_dir
+    create_dir_if_not_exist(target_dir)
+
+    new_weather_station_files = directory_diff(source_dir, target_dir, prefix="weather")
+    for file in new_weather_station_files:
+        process_weather_station_file(file, target_dir)
+
+    new_observations_files = directory_diff(
+        source_dir, target_dir, prefix="observations"
+    )
+    for file in new_observations_files:
+        process_observation_file(file, target_dir)
 
 
 if __name__ == "__main__":

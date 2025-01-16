@@ -153,7 +153,9 @@ def create_dir_if_not_exist(directory: Path | str) -> None:
 
 
 def directory_diff(
-    source_dir: Path | str, target_dir: Path | str
+    source_dir: Path | str,
+    target_dir: Path | str,
+    prefix: str | None = None,
 ) -> set[Path] | set[str]:
     """Compares the contents of two directories and identifies files that exist in the source directory but not in the target directory.
 
@@ -167,6 +169,7 @@ def directory_diff(
     Args:
         source_dir: The source directory to compare.
         target_dir: The target directory to compare.
+        prefix: An optional string to filter filenames that start with this prefix.
 
     Returns:
         A set of files that are present in the source directory but not in the target directory.
@@ -175,19 +178,19 @@ def directory_diff(
         ValueError: If either of the provided arguments is not of type Path or str.
     """
     if isinstance(source_dir, Path) and isinstance(target_dir, Path):
-        source_file_paths = get_dir_files_filesystem(source_dir)
-        target_file_paths = get_dir_files_filesystem(target_dir)
+        source_file_paths = get_dir_files_filesystem(source_dir, prefix)
+        target_file_paths = get_dir_files_filesystem(target_dir, prefix)
         return set(source_file_paths) - set(target_file_paths)
 
     elif isinstance(source_dir, str) and isinstance(target_dir, str):
-        source_file_strings = get_dir_files_bucket(source_dir)
-        target_file_strings = get_dir_files_bucket(target_dir)
+        source_file_strings = get_dir_files_bucket(source_dir, prefix)
+        target_file_strings = get_dir_files_bucket(target_dir, prefix)
         return set(source_file_strings) - set(target_file_strings)
     else:
         raise ValueError("Both source_dir and target_dir must be of type Path or str.")
 
 
-def get_dir_files_bucket(directory: str) -> list[str]:
+def get_dir_files_bucket(directory: str, prefix: str | None = None) -> list[str]:
     """Get a list of files within the specified directory in a GCS bucket.
 
     This function retrieves all files in the provided GCS directory path. It ensures
@@ -195,15 +198,18 @@ def get_dir_files_bucket(directory: str) -> list[str]:
     Only files at the given directory level (not within subdirectories) are included
     in the returned list.
 
+    If the optional `prefix` is defined, only filenames starting with this prefix is
+    returned.
+
     Args:
         directory: The GCS bucket directory path. Must end with a forward slash (/).
+        prefix: An optional string to filter filenames that start with this prefix.
 
     Returns:
         A list of file names within the specified directory.
 
     Raises:
-        ValueError: If the directory does not end with a forward slash (/).
-        ValueError: If the specified directory does not exist.
+        ValueError: If the provided `directory` is not a directory or does not exist.
     """
     if not directory.endswith("/"):
         raise ValueError(f"{directory} is not a directory. It must have a trailing `/`")
@@ -215,19 +221,24 @@ def get_dir_files_bucket(directory: str) -> list[str]:
     return [
         file
         for file in all_files
-        if fs.isfile(file) and "/" not in file[len(directory) :]
+        if fs.isfile(file)
+        and "/" not in file[len(directory) :]
+        and (prefix is None or file[len(directory) :].startswith(prefix))
     ]
 
 
-def get_dir_files_filesystem(directory: Path) -> list[Path]:
+def get_dir_files_filesystem(directory: Path, prefix: str | None = None) -> list[Path]:
     """Get a list of files within the specified directory in a local file system.
 
     This function retrieves all files in the provided directory.
     Directories or files in subdirectories are excluded from the result.
+    If the optional `prefix` is defined, only filenames starting with this prefix is
+    returned.
 
     Args:
         directory: The directory to search for files. It must
             be a valid existing directory.
+        prefix: An optional string to filter filenames that start with this prefix.
 
     Returns:
         A list of Paths, where each path represents a file in the specified directory.
@@ -237,7 +248,39 @@ def get_dir_files_filesystem(directory: Path) -> list[Path]:
     """
     if not directory.is_dir():
         raise ValueError(f"{directory} is not a directory.")
-    return [file for file in directory.iterdir() if file.is_file()]
+    return [
+        file
+        for file in directory.iterdir()
+        if file.is_file() and (prefix is None or file.name.startswith(prefix))
+    ]
+
+
+def replace_directory(filepath: Path | str, target_dir: Path | str) -> Path | str:
+    """Keep the filename and replace the directory part with a new target_dir path.
+
+    This function takes a file path and a target directory path and replaces the
+    current directory in the file path with the specified target directory.
+
+    The datatype `str` is used to represent directories in buckets.
+    The datatype `pathlib.Path` is used represent directories in a file system.
+
+    Args:
+        filepath: The original file path whose directory will be replaced.
+        target_dir: The target directory path to replace the current directory of
+            the file path.
+
+    Returns:
+        The updated file path with the directory replaced by the target directory.
+
+    Raises:
+        ValueError: If the type of `filepath` and `target_dir` is not as expected.
+    """
+    if isinstance(filepath, Path) and isinstance(target_dir, Path):
+        return target_dir / filepath.name
+    elif isinstance(filepath, str) and isinstance(target_dir, str):
+        return f"{target_dir}/{filepath.split('/')[-1]}"
+    else:
+        raise ValueError("Both filepath and target_dir must be of type Path or str.")
 
 
 def _validate_filepath(filepath: Path | str) -> None:

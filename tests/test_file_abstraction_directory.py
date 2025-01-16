@@ -7,6 +7,7 @@ from pytest_mock import MockerFixture
 from functions.file_abstraction import directory_diff
 from functions.file_abstraction import get_dir_files_bucket
 from functions.file_abstraction import get_dir_files_filesystem
+from functions.file_abstraction import replace_directory
 
 
 class TestGetDirFilesBucket:
@@ -56,6 +57,35 @@ class TestGetDirFilesBucket:
         assert result == ["bucket/dir/file1.txt", "bucket/dir/file2.txt"]
         mock_fs.return_value.exists.assert_called_once_with(directory)
         mock_fs.return_value.ls.assert_called_once_with(directory)
+
+    # Returns filtered list when prefix is provided
+    def test_returns_filtered_files_with_prefix(self, mocker: MockerFixture) -> None:
+        # Arrange
+        mock_fs = mocker.patch("gcsfs.GCSFileSystem")
+        mock_fs.return_value.exists.return_value = True
+        mock_fs.return_value.ls.return_value = [
+            "bucket/dir/file1.txt",
+            "bucket/dir/file2.txt",
+            "bucket/dir/prefix_file3.txt",
+            "bucket/dir/prefix_file4.txt",
+        ]
+        mock_fs.return_value.isfile.side_effect = lambda x: x in [
+            "bucket/dir/file1.txt",
+            "bucket/dir/file2.txt",
+            "bucket/dir/prefix_file3.txt",
+            "bucket/dir/prefix_file4.txt",
+        ]
+
+        directory = "bucket/dir/"
+        prefix = "prefix_"
+
+        # Act
+        result = get_dir_files_bucket(directory, prefix)
+
+        # Assert
+        assert len(result) == 2
+        assert "bucket/dir/prefix_file3.txt" in result
+        assert "bucket/dir/prefix_file4.txt" in result
 
     # Returns empty list for directory with no files
     def test_returns_empty_list_for_empty_directory(
@@ -148,6 +178,24 @@ class TestGetDirFilesFilesystem:
             assert test_file2 in result
             assert all(isinstance(f, Path) for f in result)
 
+    # Returns only files starting with given prefix when prefix is specified
+    def test_returns_filtered_files_with_prefix(self) -> None:
+        # Arrange
+        with tempfile.TemporaryDirectory() as temp_dir:
+            test_dir = Path(temp_dir)
+            test_files = ["prefix_file1.txt", "prefix_file2.txt", "other_file.txt"]
+            for filename in test_files:
+                (test_dir / filename).touch()
+
+            # Act
+            result = get_dir_files_filesystem(test_dir, prefix="prefix_")
+
+            # Assert
+            # Verify only files with the specified prefix are returned
+            expected_files = ["prefix_file1.txt", "prefix_file2.txt"]
+            assert len(result) == len(expected_files)
+            assert all(f.name in expected_files for f in result)
+
     # Raises ValueError when a file path is provided instead of a directory
     def test_raises_error_for_non_directory(self):
         # Arrange
@@ -180,7 +228,7 @@ class TestDirectoryDiff:
         # Assert
         assert result == {Path("/test/source/file1.txt")}
         mock_get_dir_files.assert_has_calls(
-            [mocker.call(source_dir), mocker.call(target_dir)]
+            [mocker.call(source_dir, None), mocker.call(target_dir, None)]
         )
 
     # Compare directories with str type (GCS buckets) and return files present in source but not in target
@@ -206,7 +254,7 @@ class TestDirectoryDiff:
         # Assert
         assert result == {"gs://test-bucket/source/file1.txt"}
         mock_get_dir_files_bucket.assert_has_calls(
-            [mocker.call(source_dir), mocker.call(target_dir)]
+            [mocker.call(source_dir, None), mocker.call(target_dir, None)]
         )
 
     # Mixed input types (Path and str) should raise ValueError
@@ -222,4 +270,46 @@ class TestDirectoryDiff:
         assert (
             str(exc_info.value)
             == "Both source_dir and target_dir must be of type Path or str."
+        )
+
+
+class TestReplaceDirectory:
+    # Replace directory in Path object with new Path directory while keeping filename
+    def test_replace_directory_with_path_objects(self):
+        # Arrange
+        filepath = Path("/old/dir/file.txt")
+        target_dir = Path("/new/dir")
+
+        # Act
+        result = replace_directory(filepath, target_dir)
+
+        # Assert
+        assert result == Path("/new/dir/file.txt")
+        assert isinstance(result, Path)
+
+    # Replace directory in string path with new string directory while keeping filename
+    def test_replace_directory_with_string_paths(self):
+        # Arrange
+        filepath = "/old/dir/file.txt"
+        target_dir = "/new/dir"
+
+        # Act
+        result = replace_directory(filepath, target_dir)
+
+        # Assert
+        assert result == "/new/dir/file.txt"
+        assert isinstance(result, str)
+
+    # Both inputs are different types (Path vs str) triggering ValueError
+    def test_replace_directory_with_mixed_types_raises_error(self):
+        # Arrange
+        filepath = Path("/old/dir/file.txt")
+        target_dir = "gs://bucket/new/dir"
+
+        # Act & Assert
+        with pytest.raises(ValueError) as exc_info:
+            replace_directory(filepath, target_dir)
+        assert (
+            str(exc_info.value)
+            == "Both filepath and target_dir must be of type Path or str."
         )
