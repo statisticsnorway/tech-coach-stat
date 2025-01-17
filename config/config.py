@@ -27,8 +27,7 @@ def absolute_path(relative_path: str) -> Path:
     Returns:
         The absolute path corresponding to the given relative path.
     """
-    # Assuming this file is 3 levels below repository root
-    base_dir = Path(__file__).parent.parent.parent / "config"
+    base_dir = Path(__file__).parent
     return (base_dir / Path(relative_path)).resolve()
 
 

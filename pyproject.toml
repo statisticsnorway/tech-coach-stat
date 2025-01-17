@@ -9,6 +9,7 @@ readme = "README.md"
 # without using ProjectRoot from ssb-fagfunksjoner.
 packages = [
     { include = "functions", from = "src" },
+    { include = "config" },
 ]
 
 [tool.poetry.dependencies]

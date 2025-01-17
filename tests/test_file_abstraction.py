@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from functions.config import settings
+from config.config import settings
 from functions.file_abstraction import read_json_file
 from functions.file_abstraction import read_parquet_file
 from functions.file_abstraction import write_parquet_file

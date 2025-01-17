@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from functions.config import settings
+from config.config import settings
 
 
 @pytest.fixture(scope="session")
