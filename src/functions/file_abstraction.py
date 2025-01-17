@@ -15,6 +15,9 @@ import pandas as pd
 from dapla import FileClient
 
 
+GS_URI_PREFIX = "gs://"
+
+
 def write_json_file(filepath: Path | str, data: list[dict[str, Any]]) -> None:
     """Writes dictionaries to a JSON file stored in a GCS bucket or in a local file system.
 
@@ -209,18 +212,21 @@ def get_dir_files_bucket(directory: str, prefix: str | None = None) -> list[str]
         A list of file names within the specified directory.
 
     Raises:
-        ValueError: If the provided `directory` is not a directory or does not exist.
+        ValueError: If the provided `directory` is not a gcs directory or does not exist.
     """
-    if not directory.endswith("/"):
-        raise ValueError(f"{directory} is not a directory. It must have a trailing `/`")
+    if not (directory.startswith(GS_URI_PREFIX) and directory.endswith("/")):
+        raise ValueError(
+            f"{directory} is not a gcs directory. It must start with `gs://` and end with `/`"
+        )
     fs = gcsfs.GCSFileSystem()
     if not fs.exists(directory):
         raise ValueError(f"{directory} does not exist.")
 
     all_files = fs.ls(directory)
+    all_files_with_gcs_uri = [_ensure_gcs_uri_prefix(uri) for uri in all_files]
     return [
         file
-        for file in all_files
+        for file in all_files_with_gcs_uri
         if fs.isfile(file)
         and "/" not in file[len(directory) :]
         and (prefix is None or file[len(directory) :].startswith(prefix))
@@ -286,3 +292,10 @@ def replace_directory(filepath: Path | str, target_dir: Path | str) -> Path | st
 def _validate_filepath(filepath: Path | str) -> None:
     if not isinstance(filepath, Path | str):
         raise TypeError("Expected filepath to be of type Path or str.")
+
+
+def _ensure_gcs_uri_prefix(gcs_path: str) -> str:
+    """Ensure that a GCS uri has the 'gs://' prefix."""
+    if not gcs_path.startswith(GS_URI_PREFIX):
+        gcs_path = f"{GS_URI_PREFIX}{gcs_path}"
+    return gcs_path

@@ -23,13 +23,13 @@ class TestGetDirFilesBucket:
         ]
         mock_fs.return_value.isfile.return_value = True
 
-        directory = "bucket/dir/"
+        directory = "gs://bucket/dir/"
 
         # Act
         result = get_dir_files_bucket(directory)
 
         # Assert
-        assert result == ["bucket/dir/file1.txt", "bucket/dir/file2.txt"]
+        assert result == ["gs://bucket/dir/file1.txt", "gs://bucket/dir/file2.txt"]
         mock_fs.return_value.exists.assert_called_once_with(directory)
         mock_fs.return_value.ls.assert_called_once_with(directory)
 
@@ -48,13 +48,13 @@ class TestGetDirFilesBucket:
         ]
         mock_fs.return_value.isfile.side_effect = lambda x: not x.endswith("/")
 
-        directory = "bucket/dir/"
+        directory = "gs://bucket/dir/"
 
         # Act
         result = get_dir_files_bucket(directory)
 
         # Assert
-        assert result == ["bucket/dir/file1.txt", "bucket/dir/file2.txt"]
+        assert result == ["gs://bucket/dir/file1.txt", "gs://bucket/dir/file2.txt"]
         mock_fs.return_value.exists.assert_called_once_with(directory)
         mock_fs.return_value.ls.assert_called_once_with(directory)
 
@@ -70,13 +70,13 @@ class TestGetDirFilesBucket:
             "bucket/dir/prefix_file4.txt",
         ]
         mock_fs.return_value.isfile.side_effect = lambda x: x in [
-            "bucket/dir/file1.txt",
-            "bucket/dir/file2.txt",
-            "bucket/dir/prefix_file3.txt",
-            "bucket/dir/prefix_file4.txt",
+            "gs://bucket/dir/file1.txt",
+            "gs://bucket/dir/file2.txt",
+            "gs://bucket/dir/prefix_file3.txt",
+            "gs://bucket/dir/prefix_file4.txt",
         ]
 
-        directory = "bucket/dir/"
+        directory = "gs://bucket/dir/"
         prefix = "prefix_"
 
         # Act
@@ -84,8 +84,8 @@ class TestGetDirFilesBucket:
 
         # Assert
         assert len(result) == 2
-        assert "bucket/dir/prefix_file3.txt" in result
-        assert "bucket/dir/prefix_file4.txt" in result
+        assert "gs://bucket/dir/prefix_file3.txt" in result
+        assert "gs://bucket/dir/prefix_file4.txt" in result
 
     # Returns empty list for directory with no files
     def test_returns_empty_list_for_empty_directory(
@@ -97,7 +97,7 @@ class TestGetDirFilesBucket:
         mock_fs.return_value.ls.return_value = []
         mock_fs.return_value.isfile.return_value = False
 
-        directory = "bucket/empty_dir/"
+        directory = "gs://bucket/empty_dir/"
 
         # Act
         result = get_dir_files_bucket(directory)
@@ -112,7 +112,7 @@ class TestGetDirFilesBucket:
         self, mocker: MockerFixture
     ) -> None:
         # Arrange
-        directory = "bucket/dir"
+        directory = "gs://bucket/dir"
 
         # Act & Assert
         with pytest.raises(ValueError) as exc_info:
@@ -120,7 +120,7 @@ class TestGetDirFilesBucket:
 
         assert (
             str(exc_info.value)
-            == f"{directory} is not a directory. It must have a trailing `/`"
+            == f"{directory} is not a gcs directory. It must start with `gs://` and end with `/`"
         )
 
     # Raises ValueError when directory doesn't exist in GCS
@@ -131,7 +131,7 @@ class TestGetDirFilesBucket:
         mock_fs = mocker.patch("gcsfs.GCSFileSystem")
         mock_fs.return_value.exists.return_value = False
 
-        directory = "bucket/nonexistent_dir/"
+        directory = "gs://bucket/nonexistent_dir/"
 
         # Act & Assert
         with pytest.raises(ValueError, match=f"{directory} does not exist."):
