@@ -124,6 +124,7 @@ def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
     if isinstance(filepath, Path):
         return filepath / filename
     elif isinstance(filepath, str):
+        filepath = filepath.rstrip("/")  # Remove trailing slash id there is one
         return f"{filepath}/{filename}"
 
 

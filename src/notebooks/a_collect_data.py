@@ -44,7 +44,9 @@ def get_weather_stations() -> list[dict[str, Any]]:
     data = fetch_data(endpoint, parameters)
 
     # Check if data is changed since last version and write new file if so
-    base_file = settings.weather_stations_kildedata_file
+    base_file = add_filename_to_path(
+        settings.kildedata_root_dir, settings.weather_stations_kildedata_file
+    )
     latest_file = get_latest_file_version(base_file)
     latest_data = read_json_file(latest_file) if latest_file is not None else None
 
@@ -52,7 +54,7 @@ def get_weather_stations() -> list[dict[str, Any]]:
         if (latest_file_version := get_latest_file_version(base_file)) is not None:
             next_file = get_next_file_version(latest_file_version)
         else:
-            next_file = settings.weather_stations_kildedata_file
+            next_file = base_file
         write_json_file(next_file, data)
         print(f"Storing to {next_file}")
     return data

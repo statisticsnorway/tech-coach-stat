@@ -36,14 +36,13 @@ settings = Dynaconf(
     settings_files=["settings.toml"],
     envvar_prefix="DYNACONF",
     environments=True,
-    env="default",  # Change this to switch environment: daplalab_files or local_files
+    env="local_files",  # Change this to switch environment: daplalab_files or local_files
     validators=[
         Validator(
             "kildedata_root_dir",
             "product_root_dir",
             "pre_inndata_dir",
             "inndata_dir",
-            "weather_stations_kildedata_file",
             must_exist=True,
             cast=Path,
             env="daplalab_files",
@@ -53,7 +52,6 @@ settings = Dynaconf(
             "product_root_dir",
             "pre_inndata_dir",
             "inndata_dir",
-            "weather_stations_kildedata_file",
             must_exist=True,
             cast=absolute_path,
             env="local_files",
@@ -63,6 +61,7 @@ settings = Dynaconf(
             "collect_from_date",
             "collect_to_date",
             "weather_station_names",
+            "weather_stations_kildedata_file",
             must_exist=True,
         ),
     ],
