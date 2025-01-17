@@ -8,7 +8,7 @@ from functions.versions import get_latest_file_version
 
 
 if is_dapla():
-    root_dir = settings.product_root_dir.removesuffix(f"/{settings.short_name}")
+    root_dir = settings.product_root_dir.removesuffix(f"/{settings.short_name}/")
     PREFIX = f"{root_dir}/temp/testcase/versiontest"
 
 

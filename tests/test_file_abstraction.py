@@ -20,7 +20,7 @@ def test_read_json_pathlib() -> None:
 
 @pytest.mark.skipif(not is_dapla(), reason="Bucket tests only runs on Dapla")
 def test_read_json_bucket() -> None:
-    root_dir = settings.product_root_dir.removesuffix(f"/{settings.short_name}")
+    root_dir = settings.product_root_dir.removesuffix(f"/{settings.short_name}/")
     jsonfile_bucket = f"{root_dir}/temp/testcase/versiontest/tc2/sources_v1.json"
     result = read_json_file(jsonfile_bucket)
     assert len(result) == 1
