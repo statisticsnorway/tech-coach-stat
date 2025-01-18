@@ -8,7 +8,7 @@ import pandera as pa
 from isodate import parse_duration
 from pandera.typing import DataFrame
 
-from functions.config import settings
+from config.config import settings
 from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import directory_diff
@@ -149,12 +149,14 @@ def run_all() -> None:
     target_dir = settings.inndata_dir
     create_dir_if_not_exist(target_dir)
 
-    new_weather_station_files = directory_diff(source_dir, target_dir, prefix="weather")
+    new_weather_station_files = directory_diff(
+        source_dir, target_dir, prefix=settings.weather_stations_file_prefix
+    )
     for file in new_weather_station_files:
         process_weather_station_file(file, target_dir)
 
     new_observations_files = directory_diff(
-        source_dir, target_dir, prefix="observations"
+        source_dir, target_dir, prefix=settings.observations_file_prefix
     )
     for file in new_observations_files:
         process_observation_file(file, target_dir)

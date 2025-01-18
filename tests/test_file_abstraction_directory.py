@@ -215,7 +215,7 @@ class TestDirectoryDiff:
         target_dir = Path("/test/target")
 
         source_files = [Path("/test/source/file1.txt"), Path("/test/source/file2.txt")]
-        target_files = [Path("/test/source/file2.txt")]
+        target_files = [Path("/test/source2/file2.txt")]
 
         mock_get_dir_files = mocker.patch(
             "functions.file_abstraction.get_dir_files_filesystem"
@@ -226,7 +226,7 @@ class TestDirectoryDiff:
         result = directory_diff(source_dir, target_dir)
 
         # Assert
-        assert result == {Path("/test/source/file1.txt")}
+        assert result == [Path("/test/source/file1.txt")]
         mock_get_dir_files.assert_has_calls(
             [mocker.call(source_dir, None), mocker.call(target_dir, None)]
         )
@@ -241,7 +241,7 @@ class TestDirectoryDiff:
             "gs://test-bucket/source/file1.txt",
             "gs://test-bucket/source/file2.txt",
         ]
-        target_files = ["gs://test-bucket/source/file2.txt"]
+        target_files = ["gs://test-bucket/source2/file2.txt"]
 
         mock_get_dir_files_bucket = mocker.patch(
             "functions.file_abstraction.get_dir_files_bucket"
@@ -252,7 +252,7 @@ class TestDirectoryDiff:
         result = directory_diff(source_dir, target_dir)
 
         # Assert
-        assert result == {"gs://test-bucket/source/file1.txt"}
+        assert result == ["gs://test-bucket/source/file1.txt"]
         mock_get_dir_files_bucket.assert_has_calls(
             [mocker.call(source_dir, None), mocker.call(target_dir, None)]
         )

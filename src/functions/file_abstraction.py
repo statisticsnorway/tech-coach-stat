@@ -160,7 +160,7 @@ def directory_diff(
     source_dir: Path | str,
     target_dir: Path | str,
     prefix: str | None = None,
-) -> set[Path] | set[str]:
+) -> list[Path] | list[str]:
     """Compares the contents of two directories and identifies files that exist in the source directory but not in the target directory.
 
     The function supports comparison both for files in a local file system
@@ -182,14 +182,32 @@ def directory_diff(
         ValueError: If either of the provided arguments is not of type Path or str.
     """
     if isinstance(source_dir, Path) and isinstance(target_dir, Path):
+        # Paths with directory and filename parts
         source_file_paths = get_dir_files_filesystem(source_dir, prefix)
         target_file_paths = get_dir_files_filesystem(target_dir, prefix)
-        return set(source_file_paths) - set(target_file_paths)
+
+        # Extract just the filenames from both sets of Paths
+        source_filenames = {path.name for path in source_file_paths}
+        target_filenames = {path.name for path in target_file_paths}
+        new_filenames = source_filenames - target_filenames
+
+        # Filter source_file_paths to include only those whose filenames are in new_filenames
+        new_files_with_path = [
+            path for path in source_file_paths if path.name in new_filenames
+        ]
+        return sorted(new_files_with_path)
 
     elif isinstance(source_dir, str) and isinstance(target_dir, str):
         source_file_strings = get_dir_files_bucket(source_dir, prefix)
         target_file_strings = get_dir_files_bucket(target_dir, prefix)
-        return set(source_file_strings) - set(target_file_strings)
+        # Extract just the filenames from both lists of strings
+        source_filenames = {s.rsplit("/", 1)[-1] for s in source_file_strings}
+        target_filenames = {t.rsplit("/", 1)[-1] for t in target_file_strings}
+        new_filenames = source_filenames - target_filenames
+        new_files_with_path = [
+            s for s in source_file_strings if s.rsplit("/", 1)[-1] in new_filenames
+        ]
+        return sorted(new_files_with_path)
     else:
         raise ValueError("Both source_dir and target_dir must be of type Path or str.")
 

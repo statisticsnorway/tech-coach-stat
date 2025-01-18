@@ -1,8 +1,8 @@
 import pytest
 
+from config.config import settings
 from functions._versions_bucket import _get_directory_files
 from functions._versions_bucket import get_filename
-from config.config import settings
 from functions.ssbplatforms import is_dapla
 from functions.versions import get_latest_file_version
 

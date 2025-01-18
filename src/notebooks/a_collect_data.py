@@ -19,7 +19,7 @@ from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
 from google.auth.exceptions import DefaultCredentialsError
 
-from functions.config import settings
+from config.config import settings
 from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import read_json_file
@@ -45,7 +45,8 @@ def get_weather_stations() -> list[dict[str, Any]]:
 
     # Check if data is changed since last version and write new file if so
     base_file = add_filename_to_path(
-        settings.kildedata_root_dir, settings.weather_stations_kildedata_file
+        settings.kildedata_root_dir,
+        f"{settings.weather_stations_file_prefix}.json",
     )
     latest_file = get_latest_file_version(base_file)
     latest_data = read_json_file(latest_file) if latest_file is not None else None
@@ -54,7 +55,11 @@ def get_weather_stations() -> list[dict[str, Any]]:
         if (latest_file_version := get_latest_file_version(base_file)) is not None:
             next_file = get_next_file_version(latest_file_version)
         else:
-            next_file = base_file
+            next_file = add_filename_to_path(  # No previous version, use _v1.json
+                settings.kildedata_root_dir,
+                f"{settings.weather_stations_file_prefix}_v1.json",
+            )
+
         write_json_file(next_file, data)
         print(f"Storing to {next_file}")
     return data
@@ -102,7 +107,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
     data = fetch_data(endpoint, parameters)
     print("Data retrieved from frost.met.no!")
 
-    filename = f"observations_p{extract_timespan(data)}.json"
+    filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}.json"
     observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
     print(f"Storing to {observations_file}")
 
@@ -123,10 +128,9 @@ def frost_client_id() -> str:
         RuntimeError: If the environment variable is not defined.
     """
     secret_id = "FROST_CLIENT_ID"
-    project_id = "tip-tutorials-p-mb"
 
     try:
-        client_id: str | None = get_secret_version(project_id, secret_id)
+        client_id: str | None = get_secret_version(settings.gcp_project_id, secret_id)
     except DefaultCredentialsError as e:
         print(f"Error: Unable to find GSM credentials. {e} Fallback to use .env file.")
         load_dotenv()

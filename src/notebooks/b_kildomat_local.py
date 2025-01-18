@@ -9,7 +9,7 @@ from pathlib import Path
 
 from b_kildomat import main
 
-from functions.config import settings
+from config.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
 
 
