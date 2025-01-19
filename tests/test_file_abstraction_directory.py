@@ -142,7 +142,7 @@ class TestGetDirFilesBucket:
 
 class TestGetDirFilesFilesystem:
     # Returns list of file paths for all files in a valid directory
-    def test_returns_file_paths_from_valid_directory(self):
+    def test_returns_file_paths_from_valid_directory(self) -> None:
         # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             test_dir = Path(temp_dir)
@@ -159,7 +159,7 @@ class TestGetDirFilesFilesystem:
             assert all(isinstance(f, Path) for f in result)
 
     # Correctly handles directory containing both files and subdirectories
-    def test_handles_files_and_subdirectories(self):
+    def test_handles_files_and_subdirectories(self) -> None:
         # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             test_dir = Path(temp_dir)
@@ -197,7 +197,7 @@ class TestGetDirFilesFilesystem:
             assert all(f.name in expected_files for f in result)
 
     # Raises ValueError when a file path is provided instead of a directory
-    def test_raises_error_for_non_directory(self):
+    def test_raises_error_for_non_directory(self) -> None:
         # Arrange
         with tempfile.TemporaryDirectory() as temp_dir:
             (test_file := Path(temp_dir) / "file1.txt").touch()
@@ -258,7 +258,7 @@ class TestDirectoryDiff:
         )
 
     # Mixed input types (Path and str) should raise ValueError
-    def test_mixed_types_raises_error(self):
+    def test_mixed_types_raises_error(self) -> None:
         # Arrange
         source_dir = Path("/test/source")
         target_dir = "gs://bucket/target/"
@@ -275,7 +275,7 @@ class TestDirectoryDiff:
 
 class TestReplaceDirectory:
     # Replace directory in Path object with new Path directory while keeping filename
-    def test_replace_directory_with_path_objects(self):
+    def test_replace_directory_with_path_objects(self) -> None:
         # Arrange
         filepath = Path("/old/dir/file.txt")
         target_dir = Path("/new/dir")
@@ -288,7 +288,7 @@ class TestReplaceDirectory:
         assert isinstance(result, Path)
 
     # Replace directory in string path with new string directory while keeping filename
-    def test_replace_directory_with_string_paths(self):
+    def test_replace_directory_with_string_paths(self) -> None:
         # Arrange
         filepath = "gs://old/dir/file.txt"
         target_dir = "gs://new/dir/"
@@ -301,7 +301,7 @@ class TestReplaceDirectory:
         assert isinstance(result, str)
 
     # Both inputs are different types (Path vs str) triggering ValueError
-    def test_replace_directory_with_mixed_types_raises_error(self):
+    def test_replace_directory_with_mixed_types_raises_error(self) -> None:
         # Arrange
         filepath = Path("/old/dir/file.txt")
         target_dir = "gs://bucket/new/dir/"
@@ -313,3 +313,10 @@ class TestReplaceDirectory:
             str(exc_info.value)
             == "Both filepath and target_dir must be of type Path or str."
         )
+
+    # Check GCS directory format validation
+    def test_replace_directory_with_invalid_gcs_directory(self) -> None:
+        filepath = "gs://bucket/old_dir/file.txt"
+        invalid_target_dir = "invalid_gcs_dir"
+        with pytest.raises(ValueError, match="is not a gcs directory"):
+            replace_directory(filepath, invalid_target_dir)
