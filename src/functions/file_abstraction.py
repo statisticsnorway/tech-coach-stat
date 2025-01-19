@@ -233,10 +233,7 @@ def get_dir_files_bucket(directory: str, prefix: str | None = None) -> list[str]
     Raises:
         ValueError: If the provided `directory` is not a gcs directory or does not exist.
     """
-    if not (directory.startswith(GS_URI_PREFIX) and directory.endswith("/")):
-        raise ValueError(
-            f"{directory} is not a gcs directory. It must start with `gs://` and end with `/`"
-        )
+    _check_if_valid_gcs_directory(directory)
     fs = gcsfs.GCSFileSystem()
     if not fs.exists(directory):
         raise ValueError(f"{directory} does not exist.")
@@ -298,14 +295,16 @@ def replace_directory(filepath: Path | str, target_dir: Path | str) -> Path | st
         The updated file path with the directory replaced by the target directory.
 
     Raises:
-        ValueError: If the type of `filepath` and `target_dir` is not as expected.
+        TypeError: If the type of `filepath` and `target_dir` is not as expected.
+        ValueError: If the provided `target_dir` is not a gcs directory.
     """
     if isinstance(filepath, Path) and isinstance(target_dir, Path):
         return target_dir / filepath.name
     elif isinstance(filepath, str) and isinstance(target_dir, str):
-        return f"{target_dir}/{filepath.split('/')[-1]}"
+        _check_if_valid_gcs_directory(target_dir)
+        return f"{target_dir}{filepath.split('/')[-1]}"
     else:
-        raise ValueError("Both filepath and target_dir must be of type Path or str.")
+        raise TypeError("Both filepath and target_dir must be of type Path or str.")
 
 
 def _validate_filepath(filepath: Path | str) -> None:
@@ -318,3 +317,11 @@ def _ensure_gcs_uri_prefix(gcs_path: str) -> str:
     if not gcs_path.startswith(GS_URI_PREFIX):
         gcs_path = f"{GS_URI_PREFIX}{gcs_path}"
     return gcs_path
+
+
+def _check_if_valid_gcs_directory(directory: str) -> None:
+    """Raise an excpetion if not valid gcs directory."""
+    if not (directory.startswith(GS_URI_PREFIX) and directory.endswith("/")):
+        raise ValueError(
+            f"{directory} is not a gcs directory. It must start with `gs://` and end with `/`"
+        )

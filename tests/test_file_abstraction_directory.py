@@ -228,7 +228,7 @@ class TestDirectoryDiff:
         # Assert
         assert result == [Path("/test/source/file1.txt")]
         mock_get_dir_files.assert_has_calls(
-            [mocker.call(source_dir, None), mocker.call(target_dir, None)]
+            [mocker.call(source_dir, None), mocker.call(target_dir, None)]  # type: ignore
         )
 
     # Compare directories with str type (GCS buckets) and return files present in source but not in target
@@ -254,7 +254,7 @@ class TestDirectoryDiff:
         # Assert
         assert result == ["gs://test-bucket/source/file1.txt"]
         mock_get_dir_files_bucket.assert_has_calls(
-            [mocker.call(source_dir, None), mocker.call(target_dir, None)]
+            [mocker.call(source_dir, None), mocker.call(target_dir, None)]  # type: ignore
         )
 
     # Mixed input types (Path and str) should raise ValueError
@@ -290,24 +290,24 @@ class TestReplaceDirectory:
     # Replace directory in string path with new string directory while keeping filename
     def test_replace_directory_with_string_paths(self):
         # Arrange
-        filepath = "/old/dir/file.txt"
-        target_dir = "/new/dir"
+        filepath = "gs://old/dir/file.txt"
+        target_dir = "gs://new/dir/"
 
         # Act
         result = replace_directory(filepath, target_dir)
 
         # Assert
-        assert result == "/new/dir/file.txt"
+        assert result == "gs://new/dir/file.txt"
         assert isinstance(result, str)
 
     # Both inputs are different types (Path vs str) triggering ValueError
     def test_replace_directory_with_mixed_types_raises_error(self):
         # Arrange
         filepath = Path("/old/dir/file.txt")
-        target_dir = "gs://bucket/new/dir"
+        target_dir = "gs://bucket/new/dir/"
 
         # Act & Assert
-        with pytest.raises(ValueError) as exc_info:
+        with pytest.raises(TypeError) as exc_info:
             replace_directory(filepath, target_dir)
         assert (
             str(exc_info.value)
