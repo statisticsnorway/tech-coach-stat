@@ -6,6 +6,7 @@ from typing import cast
 import pandas as pd
 import pandera as pa
 from isodate import parse_duration
+from pandera.errors import SchemaErrors
 from pandera.typing import DataFrame
 
 from config.config import settings
@@ -96,7 +97,7 @@ def _calc_observation_time(row: pd.Series) -> datetime:
     return reference_time + time_offset
 
 
-def handle_validation_errors(df: pd.DataFrame, errors: pa.errors.SchemaErrors) -> None:
+def handle_validation_errors(df: pd.DataFrame, errors: SchemaErrors) -> None:
     """Handle and log validation errors from the schema validation process.
 
     Display the relevant rows from the provided DataFrame that failed validation,
@@ -125,7 +126,7 @@ def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -
         target_path = replace_directory(filepath, target_dir)
         write_parquet_file(target_path, inndata_ws_df)
         print(f"Saving file {target_path}")
-    except pa.errors.SchemaErrors as errors:
+    except SchemaErrors as errors:
         handle_validation_errors(weather_stations, errors)
 
 
@@ -138,7 +139,7 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
         target_path = replace_directory(filepath, target_dir)
         write_parquet_file(target_path, inndata_obs_df)
         print(f"Saving file {target_path}")
-    except pa.errors.SchemaErrors as errors:
+    except SchemaErrors as errors:
         handle_validation_errors(observations, errors)
 
 

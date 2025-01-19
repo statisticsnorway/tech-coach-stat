@@ -7,10 +7,10 @@ It requires that the environment `local_files` in `config.py` is used.
 import logging
 from pathlib import Path
 
-from b_kildomat import main
-
 from config.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
+
+from .b_kildomat import main
 
 
 def run_all() -> None:

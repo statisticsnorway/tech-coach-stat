@@ -224,7 +224,7 @@ def get_latest_observation_date(directory: Path | str) -> date | None:
 
     if isinstance(directory, str):
         fs = FileClient.get_gcs_file_system()
-        gcs_files = fs.glob(f"{directory}/{OBSERVATION_FILE_PATTERN}")
+        gcs_files = cast(list[str], fs.glob(f"{directory}{OBSERVATION_FILE_PATTERN}"))
         return find_latest_date_in_files(gcs_files)
 
     return None  # type: ignore[unreachable]
