@@ -18,17 +18,19 @@
 # Kommenter ut de bitene du vil at den ikke skal kjøre.
 
 # %%
-import a_collect_data
-import b_kildomat_local
+import a_collect_data  # type: ignore
+import b_kildomat_local  # type: ignore
+import c_pre_inndata_to_inndata  # type: ignore
 
 
 # %%
-def run_all() -> None:
+def main() -> None:
     """Run all files."""
     a_collect_data.run_all()
     b_kildomat_local.run_all()
+    c_pre_inndata_to_inndata.run_all()
 
 
 # %%
 if __name__ == "__main__":
-    run_all()
+    main()

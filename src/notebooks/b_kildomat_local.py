@@ -5,10 +5,11 @@ It requires that the environment `local_files` in `config.py` is used.
 """
 
 import logging
+from pathlib import Path
 
-from b_kildomat import main
+from b_kildomat import main  # type: ignore
 
-from functions.config import settings
+from config.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
 
 
@@ -17,10 +18,10 @@ def run_all() -> None:
 
     Scan the kildedata directory for files and feed each of them to the kildomat.
     """
+    print(f"Running {Path(__file__).name}")
     if settings.env_for_dynaconf != "local_files":
         raise RuntimeError("Kildomat_local only works when environment is local_files")
 
-    print("Running kildomat_local.py")
     source_dir = settings.kildedata_root_dir
     logging.info(f"Scanning files in directory: {source_dir}")
     target_dir = settings.pre_inndata_dir

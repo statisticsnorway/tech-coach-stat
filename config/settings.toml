@@ -4,23 +4,35 @@
 # specified environment. The values in the default section is always set first,
 # and if another environment is specified then the values are overriden.
 #
-# You can select whic environment to use in the file config/config.py.
+# The `default` environment is using buckets on DaplaLab.
+# The `daplab_files` environment is using buckets mounted as files on DaplaLab.
+# The `local_files` is using local files in the data directory in the repo
+# and can be used everywhere.
+#
+# You can select which environment to use in the file config/config.py.
 
+# All bucket directories must start with 'gs://' and end with a trailing slash, '/'.
 [default]
 dapla_team = "tip-tutorials"
 short_name = "metstat"  # statistikkens kortnavn, metstat for meteorologisk statistikk
-kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-prod/{this.short_name}/frost"
-product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-prod/{this.short_name}"
-pre_inndata_dir = "@format {this.product_root_dir}/inndata/temp/pre-inndata/frost"
-weather_stations_kildedata_file = "@format {this.kildedata_root_dir}/weather_stations_v1.json"
+gcp_project_id = "@format {this.dapla_team}-p-mb"
+kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-prod/{this.short_name}/frost/"
+product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-prod/{this.short_name}/"
+pre_inndata_dir = "@format {this.product_root_dir}inndata/temp/pre-inndata/frost/"
+inndata_dir = "@format {this.product_root_dir}inndata/frost/"
+weather_stations_file_prefix = "weather_stations"
+observations_file_prefix = "observations"
 collect_from_date = "2011-01-01"
-collect_to_date = "2012-01-01"
 weather_station_names = ["OSLO - BLINDERN", "KONGSVINGER"]
 
 [daplalab_files]
-kildedata_root_dir = "@format /buckets/kilde/{this.short_name}/frost"
-product_root_dir = "@format /buckets/produkt/{this.short_name}"
+kildedata_root_dir = "@format /buckets/kilde/{this.short_name}/frost/"
+product_root_dir = "@format /buckets/produkt/{this.short_name}/"
+pre_inndata_dir = "@format {this.product_root_dir}/inndata/temp/pre-inndata/frost/"
+inndata_dir = "@format {this.product_root_dir}/inndata/frost/"
 
 [local_files]  # Relative paths to the config directory
-kildedata_root_dir = "@format ../data/{this.short_name}/kildedata/frost"
-product_root_dir = "@format ../data/{this.short_name}"
+kildedata_root_dir = "@format ../data/{this.short_name}/kildedata/frost/"
+product_root_dir = "@format ../data/{this.short_name}/"
+pre_inndata_dir = "@format {this.product_root_dir}/inndata/temp/pre-inndata/frost/"
+inndata_dir = "@format {this.product_root_dir}/inndata/frost/"

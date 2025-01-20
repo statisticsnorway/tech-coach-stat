@@ -27,20 +27,25 @@ Dette repoet brukes til to ting:
 Til nå viser repoet:
 
 - Datafangst via API
-- Håndtering av hemmeligheter
+- Håndtering av hemmeligheter, med Google Secret Manager og .env-fil (se [GSM-beskrivelse])
 - Bruk av konfigurasjonsfiler ved hjelp av [Dynaconf]. Filstier, perioder osv. legges
-  in konfigurasjonsfil i stedet for å hardkodes i hver enkelt notebook.
+  i en konfigurasjonsfil i stedet for å hardkodes i hver enkelt notebook.
 - Versjonering av filer (delvis)
 - Bruk av kodekvalitetsverktøy
 - Organisering i form av funksjoner og automatisert kjøring av disse.
 - Enhetstesting, det vil si testing av logikken i funksjonene.
 - Automatisert testing ved hjelp av GitHub Actions
 - Kildomaten
-- Datatilstander: Fram til pre-inndata
+- Datatilstander: Fram til inndata
+- Datavalidering av dataframes med [Pandera]
+- Innhenting av kun nye observasjoner (sjekker sist innhentede)
+- Prossesering av kun av nye filer (sjekker hvem som er behandlet fra før)
 
 Det neste på blokka:
 
-- Datatilstand: Fram til inndata.
+- Datatilstand: Fram til klargjorte data.
+- Logging
+- Pseudonymisering
 
 ## Konfigurasjonsfil og miljøer
 
@@ -52,7 +57,7 @@ statistikken, filstier, perioder osv. Den definerer tre "miljøer":
 - **daplalab_files:** Bruk bøtter montert som filer på DaplaLab
 - **local_files:** Bruk av lokale filer under en `data`-katalog i repoet.
 
-Valg av miljø gjør man i filen `src/functions/config.py`.
+Valg av miljø gjør man i filen `config/config.py`.
 
 I koden brukes det gjennomgående type `str` for å angi filstier i bøtter,
 og type `pathlib.Path` for å angi stier til filer på et filsystem.
@@ -83,23 +88,45 @@ ligge i git.
 
 Repoet er som standard satt opp til å kjøre mot bøtter i dapla teamet `tip-tutorials`.
 Hvis du vil teste det hos deg, så sett `env="local_files"` i fila
-`src/functions.config.py`. Da vil alle filer lagres lokalt i data-mappen i repoet.
+`config/config.py`. Da vil alle filer lagres lokalt i data-mappen i repoet.
 
 ### Kjøring
 
 Nå er alt klart til å kjøre koden.
 
-Foreløpig er det bare det fra datafangst og fram til pre-inndata som er på plass.
+Foreløpig er det bare fra datafangst og fram til inndata som er på plass.
 
-Kjør filen `src/notebooks/collect_data.py` enten ved å åpne den i vscode eller Jupyter,
+#### I miljøet local_files
+
+Kjør filen `src/notebooks/run_all.py` enten ved å åpne den i vscode eller Jupyter,
 og kjør den derfra. Eller fra kommandolinja:
 
 ```shell
-python src/notebooks/collect_data.py
+poetry run python src/notebooks/run_all.py
+```
+
+#### I miljøene daplalab_files og default
+
+Her må datainnsamlingen kjøres som data-admin siden man trenger til kildedata-bøtta.
+Kjør filen `src/notebooks/a_collect_data.py` enten ved å åpne den i vscode eller Jupyter,
+og kjør den derfra. Eller fra kommandolinja:
+
+```shell
+poetry run python src/notebooks/a_collect_data.py
+```
+
+Resten kjører man med developer-tilgang. Kildomaten kjøres automatisk så den trenger man ikke kjøre.
+Kjør filen `src/notebooks/c_pre_inndata_to_inndata.py` enten ved å åpne den i vscode eller Jupyter,
+og kjør den derfra. Eller fra kommandolinja:
+
+```shell
+poetry run python src/notebooks/c_pre_inndata_to_inndata.py
 ```
 
 [Dapla-manualen]: https://manual.dapla.ssb.no/
 [Dynaconf]: https://www.dynaconf.com/
 [Frost API]: https://frost.met.no/index.html
+[GSM-beskrivelse]: https://statistics-norway.atlassian.net/wiki/spaces/BEST/pages/3216703491/Hvordan+h+ndtere+hemmeligheter+og+passord+i+git#Google-Secret-Manager
 [KVAKK]: https://statistics-norway.atlassian.net/wiki/spaces/BEST/pages/3261497397/Kvalitet+i+kode+og+koding
+[Pandera]: https://pandera.readthedocs.io/en/stable/index.html
 [Standardutvalget]: https://ssbno.sharepoint.com/sites/Avdelingerutvalgograd/SitePages/Vedtak-fra-Standardutvalget.aspx

@@ -5,15 +5,21 @@
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
 import os
+import re
+from collections.abc import Iterable
+from datetime import date
+from datetime import timedelta
+from pathlib import Path
 from typing import Any
 from typing import cast
 
 import requests
+from dapla import FileClient
 from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
 from google.auth.exceptions import DefaultCredentialsError
 
-from functions.config import settings
+from config.config import settings
 from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import read_json_file
@@ -38,7 +44,10 @@ def get_weather_stations() -> list[dict[str, Any]]:
     data = fetch_data(endpoint, parameters)
 
     # Check if data is changed since last version and write new file if so
-    base_file = settings.weather_stations_kildedata_file
+    base_file = add_filename_to_path(
+        settings.kildedata_root_dir,
+        f"{settings.weather_stations_file_prefix}.json",
+    )
     latest_file = get_latest_file_version(base_file)
     latest_data = read_json_file(latest_file) if latest_file is not None else None
 
@@ -46,7 +55,11 @@ def get_weather_stations() -> list[dict[str, Any]]:
         if (latest_file_version := get_latest_file_version(base_file)) is not None:
             next_file = get_next_file_version(latest_file_version)
         else:
-            next_file = settings.weather_stations_kildedata_file
+            next_file = add_filename_to_path(  # No previous version, use _v1.json
+                settings.kildedata_root_dir,
+                f"{settings.weather_stations_file_prefix}_v1.json",
+            )
+
         write_json_file(next_file, data)
         print(f"Storing to {next_file}")
     return data
@@ -67,6 +80,16 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
     Returns:
         A list of dictionaries containing the weather observation data.
     """
+    if latest_date := get_latest_observation_date(settings.kildedata_root_dir):
+        from_date_str = (latest_date + timedelta(days=1)).isoformat()
+    else:
+        from_date_str = settings.collect_from_date
+
+    today_str = date.today().isoformat()
+    if from_date_str == today_str:
+        print("No new observations to collect.")
+        return []
+
     endpoint = "https://frost.met.no/observations/v0.jsonld"
     parameters = {
         "sources": ",".join(source_ids_),
@@ -77,14 +100,14 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
             "sum(precipitation_amount P1D),"
             "max(wind_speed P1D)"
         ),
-        "referencetime": f"{settings.collect_from_date}/{settings.collect_to_date}",
+        "referencetime": f"{from_date_str}/{today_str}",
         "levels": "default",
         "timeoffsets": "default",
     }
     data = fetch_data(endpoint, parameters)
     print("Data retrieved from frost.met.no!")
 
-    filename = f"observations_p{extract_timespan(data)}.json"
+    filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}.json"
     observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
     print(f"Storing to {observations_file}")
 
@@ -105,19 +128,16 @@ def frost_client_id() -> str:
         RuntimeError: If the environment variable is not defined.
     """
     secret_id = "FROST_CLIENT_ID"
-    project_id = "tip-tutorials-p-mb"
 
     try:
-        client_id = get_secret_version(project_id, secret_id)
+        client_id: str | None = get_secret_version(settings.gcp_project_id, secret_id)
     except DefaultCredentialsError as e:
         print(f"Error: Unable to find GSM credentials. {e} Fallback to use .env file.")
-
         load_dotenv()
         client_id = os.getenv(secret_id)
-        if client_id is None:
-            raise RuntimeError(
-                f"{secret_id} environment variable is not defined"
-            ) from e
+
+    if client_id is None:
+        raise RuntimeError(f"{secret_id} environment variable is not defined")
     return client_id
 
 
@@ -185,8 +205,69 @@ def get_weather_stations_ids(
     return [name_to_id[name] for name in weather_stations_names]
 
 
+def get_latest_observation_date(directory: Path | str) -> date | None:
+    """Find the latest observation date from filenames in the given directory.
+
+    It is based on the file name pattern observations_pYYYY-MM-DD_pYYYY-MM-DD,
+    where the last YYYY-MM-DD is the date of the latest observation.
+
+    Args:
+        directory: A path to the directory containing observation files.
+
+    Returns:
+        The latest date found in the filenames or `None` if no valid dates are found.
+    """
+    OBSERVATION_FILE_PATTERN = "observations*"
+
+    if isinstance(directory, Path):
+        return find_latest_date_in_files(directory.glob(OBSERVATION_FILE_PATTERN))
+
+    if isinstance(directory, str):
+        fs = FileClient.get_gcs_file_system()
+        gcs_files = cast(list[str], fs.glob(f"{directory}{OBSERVATION_FILE_PATTERN}"))
+        return find_latest_date_in_files(gcs_files)
+
+    return None  # type: ignore[unreachable]
+
+
+def find_latest_date_in_files(files: Iterable[str] | Iterable[Path]) -> date | None:
+    """Extract the latest date from a given list of file paths or filenames."""
+    latest_date = None
+    for file in files:
+        file_name = file.name if isinstance(file, Path) else file
+        extracted_date = extract_latest_date_from_filename(file_name)
+        if extracted_date and (latest_date is None or extracted_date > latest_date):  # type: ignore[unreachable]
+            latest_date = extracted_date
+    return latest_date
+
+
+def extract_latest_date_from_filename(filename: str) -> date | None:
+    """Extracts the latest date provided in the given filename.
+
+    It is based on the file name pattern ending in `_pYYYY-MM-DD_pYYYY-MM-DD`,
+    where the last `YYYY-MM-DD` is the date of the latest observation.
+
+    Args:
+        filename: The filename containing date information in the format
+            `_pYYYY-MM-DD_pYYYY-MM-DD`.
+
+    Returns:
+        The latest date extracted from the filename or `None` if no match is found.
+    """
+    # sourcery skip: use-named-expression
+
+    # Regular expression to find the second date in filename (format YYYY-MM-DD)
+    match = re.search(r"_p\d{4}-\d{2}-\d{2}_p(\d{4}-\d{2}-\d{2})", filename)
+    if match:
+        latest_date_str = match[1]
+        return date.fromisoformat(latest_date_str)
+    else:
+        return None
+
+
 def run_all() -> None:
     """Run the code in this module."""
+    print(f"Running {Path(__file__).name}")
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
     print(f"Using environment: {settings.env_for_dynaconf}")

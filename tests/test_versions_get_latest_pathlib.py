@@ -15,6 +15,7 @@ def test_returns_latest_version() -> None:
 
         # Test the function
         latest_file = get_latest_file_version(Path(temp_dir) / "file_v1.txt")
+        assert isinstance(latest_file, Path)
         assert latest_file.name == "file_v10.txt"
 
 
@@ -40,6 +41,7 @@ def test_files_with_different_extensions() -> None:
 
         # Test the function
         latest_file = get_latest_file_version(Path(temp_dir) / "file_v1.txt")
+        assert isinstance(latest_file, Path)
         assert latest_file.name == "file_v3.txt"
 
 
@@ -53,6 +55,7 @@ def test_handles_special_characters_and_spaces() -> None:
 
         # Test the function
         latest_file = get_latest_file_version(Path(temp_dir) / "file @.txt")
+        assert isinstance(latest_file, Path)
         assert latest_file.name == "file @_v3.txt"
 
 
@@ -66,4 +69,5 @@ def test_handles_multiple_v_patterns() -> None:
 
         # Test the function
         latest_file = get_latest_file_version(Path(temp_dir) / "file_v1_v2.txt")
+        assert isinstance(latest_file, Path)
         assert latest_file.name == "file_v1_v10.txt"

@@ -7,7 +7,7 @@ the iac-project for the Dapla team.
 The kildomat service requires exactly one argument in the main function, so change
 the start of the main function the following way after copying the file:
   def main(source_file: Path | str) -> None:
-      target_dir = None  # Fix for kildomat requireing just one argument
+      target_dir = None  # Fix for kildomat requiring just one argument
 
 When running locally or for testing, use the kildomat_local.py file instead.
 """
@@ -59,6 +59,8 @@ def process_weather_stations(source_file: Path | str, target_dir: Path | None) -
             "wmoId",
             "icaoCodes",
             "shipCodes",
+            "@type",
+            "stationHolders",
         ],
         errors="ignore",
     )
@@ -105,7 +107,7 @@ def process_observations(source_file: Path | str, target_dir: Path | None) -> No
     )
 
     # Convert datatypes
-    df["referenceTime"] = pd.to_datetime(df["referenceTime"])
+    df["referenceTime"] = pd.to_datetime(df["referenceTime"], utc=True)
     df = df.astype(
         {col: "string" for col in df.select_dtypes(include="object").columns}
     )
@@ -129,7 +131,7 @@ def get_target_filepath(source_file: Path | str, target_dir: Path | None) -> Pat
 
     if isinstance(source_file, str):
         target_bucket = "gs://ssb-tip-tutorials-data-produkt-prod"
-        folder = "tip-tutorials/inndata/temp/pre-inndata"
+        folder = "metstat/inndata/temp/pre-inndata/frost"
         target_filename = source_file.split("/")[-1].replace("json", "parquet")
         target_filepath = f"{target_bucket}/{folder}/{target_filename}"
     elif target_dir and isinstance(source_file, Path):
