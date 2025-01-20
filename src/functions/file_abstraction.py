@@ -76,9 +76,9 @@ def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
     """
     _validate_filepath(filepath)
     if isinstance(filepath, Path):
-        df.to_parquet(filepath)
+        df.to_parquet(filepath, index=False)
     elif isinstance(filepath, str):
-        dp.write_pandas(df=df, gcs_path=filepath)
+        dp.write_pandas(df=df, gcs_path=filepath, index=False)
 
 
 def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
