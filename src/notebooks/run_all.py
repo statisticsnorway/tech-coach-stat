@@ -18,9 +18,9 @@
 # Kommenter ut de bitene du vil at den ikke skal kjøre.
 
 # %%
-import a_collect_data  # type: ignore
-import b_kildomat_local  # type: ignore
-import c_pre_inndata_to_inndata  # type: ignore
+import a_collect_data
+import b_kildomat_local
+import c_pre_inndata_to_inndata
 
 
 # %%

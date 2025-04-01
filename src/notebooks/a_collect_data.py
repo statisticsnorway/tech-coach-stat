@@ -243,7 +243,7 @@ def find_latest_date_in_files(files: Iterable[str] | Iterable[Path]) -> date | N
     for file in files:
         file_name = file.name if isinstance(file, Path) else file
         extracted_date = extract_latest_date_from_filename(file_name)
-        if extracted_date and (latest_date is None or extracted_date > latest_date):  # type: ignore[unreachable]
+        if extracted_date and (latest_date is None or extracted_date > latest_date):
             latest_date = extracted_date
     return latest_date
 
@@ -288,10 +288,10 @@ def run_all() -> None:
 
 if __name__ == "__main__":
     root_logger = StatLogger()
-    #logging.basicConfig(
+    # logging.basicConfig(
     #   level=logging.DEBUG,
     #    format='%(asctime)s - %(levelname)s - %(message)s - %(name)s - [%(module)s.%(funcName)s #L%(lineno)s]'
-    #)
+    # )
     # Don't print debug logs from these third-party libraries
     logging.getLogger("google").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)

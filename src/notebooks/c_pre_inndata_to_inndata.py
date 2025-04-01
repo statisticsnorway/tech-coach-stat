@@ -6,6 +6,7 @@ from typing import cast
 import pandas as pd
 import pandera as pa
 from isodate import parse_duration
+from pandera.errors import SchemaError
 from pandera.errors import SchemaErrors
 from pandera.typing import DataFrame
 
@@ -97,15 +98,17 @@ def _calc_observation_time(row: pd.Series) -> datetime:
     return reference_time + time_offset
 
 
-def handle_validation_errors(df: pd.DataFrame, errors: SchemaErrors) -> None:
-    """Handle and log validation errors from the schema validation process.
+def print_validation_errors(
+    df: pd.DataFrame, errors: SchemaErrors | SchemaError
+) -> None:
+    """Print and log validation errors from the schema validation process.
 
     Display the relevant rows from the provided DataFrame that failed validation,
     along with associated failure details.
 
     Args:
         df: The DataFrame that was validated.
-        errors: The schema validation errors encountered during the validation
+        errors: The schema validation error or errors encountered during the validation
             process, including details about the failure cases.
     """
     print(errors)
@@ -122,12 +125,45 @@ def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -
     print(f"Processing file {filepath}")
     weather_stations = read_parquet_file(filepath)
     try:
-        inndata_ws_df = transform_ws_to_inndata(weather_stations)
-        target_path = replace_directory(filepath, target_dir)
-        write_parquet_file(target_path, inndata_ws_df)
-        print(f"Saving file {target_path}")
-    except SchemaErrors as errors:
-        handle_validation_errors(weather_stations, errors)
+        transform_validate_store_ws(weather_stations, filepath, target_dir)
+    except (SchemaErrors, SchemaError) as validation_errors:
+        print_validation_errors(weather_stations, validation_errors)
+        print("Validation errors, trying to autocorrect the weather station data.")
+        corrected_weather_stations = autocorrect_ws(weather_stations, validation_errors)
+        try:
+            transform_validate_store_ws(
+                corrected_weather_stations,
+                filepath,
+                target_dir,
+            )
+        except (SchemaErrors, SchemaError) as validation_errors:
+            print_validation_errors(weather_stations, validation_errors)
+
+
+def transform_validate_store_ws(
+    weather_stations: pd.DataFrame, filepath: Path | str, target_dir: Path | str
+) -> None:
+    """Transform, validate and store weather station data.
+
+    Transforms a DataFrame of weather stations to inndata, validates it, and stores it
+    if there are no validation errors.
+
+    Args:
+        weather_stations: Weather stations data to be transformed and validated.
+        filepath: The original file path of the input data file.
+        target_dir: The target directory where the transformed and validated
+            data will be stored.
+
+    Returns:
+        None
+
+    Raises:
+         SchemaErrors, SchemaError: If there are validation errors in the transformed data.
+    """
+    inndata_ws_df = transform_ws_to_inndata(weather_stations)
+    target_path = replace_directory(filepath, target_dir)
+    write_parquet_file(target_path, inndata_ws_df)
+    print(f"Saving file {target_path}")
 
 
 def process_observation_file(filepath: Path | str, target_dir: Path | str) -> None:
@@ -139,8 +175,25 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
         target_path = replace_directory(filepath, target_dir)
         write_parquet_file(target_path, inndata_obs_df)
         print(f"Saving file {target_path}")
-    except SchemaErrors as errors:
-        handle_validation_errors(observations, errors)
+    except (SchemaErrors, SchemaError) as validation_errors:
+        print_validation_errors(observations, validation_errors)
+
+
+def autocorrect_ws(
+    weather_stations: pd.DataFrame, errors: SchemaErrors | SchemaError
+) -> pd.DataFrame:
+    """Try to automatically corrects weather station data based on validation errors.
+
+    Corrections:
+    1. Remove row with id 'SN499999010', if present. Have checked that this weather
+        station is an iot device with incomplete data.
+    """
+    # Drop row with id 'SN499999010'
+    fixed_weather_stations = weather_stations[
+        weather_stations["id"] != "SN499999010"
+    ].copy()
+    print("Removing weather station with id 'SN499999010' from dataset")
+    return fixed_weather_stations
 
 
 def run_all() -> None:
