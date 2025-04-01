@@ -8,9 +8,13 @@ import logging
 from pathlib import Path
 
 from b_kildomat import main
+from fagfunksjoner.log.statlogger import StatLogger
 
 from config.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
+
+
+logger = logging.getLogger(__name__)
 
 
 def run_all() -> None:
@@ -18,12 +22,13 @@ def run_all() -> None:
 
     Scan the kildedata directory for files and feed each of them to the kildomat.
     """
-    print(f"Running {Path(__file__).name}")
+    logger.info("Running %s", Path(__file__).name)
     if settings.env_for_dynaconf != "local_files":
         raise RuntimeError("Kildomat_local only works when environment is local_files")
+    logger.info("Using environment: %s", settings.env_for_dynaconf)
 
     source_dir = settings.kildedata_root_dir
-    logging.info(f"Scanning files in directory: {source_dir}")
+    logger.info("Scanning files in directory: %s", source_dir)
     target_dir = settings.pre_inndata_dir
     create_dir_if_not_exist(target_dir)
 
@@ -33,4 +38,5 @@ def run_all() -> None:
 
 
 if __name__ == "__main__":
+    root_logger = StatLogger()
     run_all()

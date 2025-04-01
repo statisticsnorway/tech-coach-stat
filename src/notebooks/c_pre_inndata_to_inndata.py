@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
@@ -5,6 +6,7 @@ from typing import cast
 
 import pandas as pd
 import pandera as pa
+from fagfunksjoner.log.statlogger import StatLogger
 from isodate import parse_duration
 from pandera.errors import SchemaError
 from pandera.errors import SchemaErrors
@@ -20,6 +22,9 @@ from functions.file_abstraction import write_parquet_file
 from functions.versions import get_latest_file_version
 from schemas.observation_schemas import ObservationInndataSchema
 from schemas.weather_station_schemas import WeatherStationInndataSchema
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_latest_weather_stations() -> pd.DataFrame:
@@ -98,37 +103,39 @@ def _calc_observation_time(row: pd.Series) -> datetime:
     return reference_time + time_offset
 
 
-def print_validation_errors(
-    df: pd.DataFrame, errors: SchemaErrors | SchemaError
-) -> None:
-    """Print and log validation errors from the schema validation process.
+def log_validation_errors(df: pd.DataFrame, errors: SchemaErrors | SchemaError) -> None:
+    """Log validation errors from the schema validation process.
 
     Display the relevant rows from the provided DataFrame that failed validation,
-    along with associated failure details.
+    along with associated failure details. Additionally the failed rows are saved
+    to a parquet file.
 
     Args:
         df: The DataFrame that was validated.
         errors: The schema validation error or errors encountered during the validation
             process, including details about the failure cases.
     """
-    print(errors)
+    logger.warning("Validation errors occurred")
+    logger.info("Errors: %s", errors)
     failure_cases = errors.failure_cases
     failed_indices = failure_cases["index"].unique()
-    columns_to_print = ["id", "name", "municipalityId", "countyId"]
-    failed_rows = df.loc[failed_indices, columns_to_print]
-    print("Failed Rows:")
-    print(failed_rows)
+    failed_rows = df.loc[failed_indices]
+    failed_rows.to_parquet("validation_errors.parquet", index=False)
+    logger.info("Failed Rows:")
+    logger.info("\n%s", failed_rows.to_string())
 
 
 def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -> None:
     """Process a weather station file."""
-    print(f"Processing file {filepath}")
+    logger.info("Processing weather station file %s", filepath)
     weather_stations = read_parquet_file(filepath)
     try:
         transform_validate_store_ws(weather_stations, filepath, target_dir)
     except (SchemaErrors, SchemaError) as validation_errors:
-        print_validation_errors(weather_stations, validation_errors)
-        print("Validation errors, trying to autocorrect the weather station data.")
+        log_validation_errors(weather_stations, validation_errors)
+        logger.info(
+            "Validation errors, trying to autocorrect the weather station data."
+        )
         corrected_weather_stations = autocorrect_ws(weather_stations, validation_errors)
         try:
             transform_validate_store_ws(
@@ -137,7 +144,7 @@ def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -
                 target_dir,
             )
         except (SchemaErrors, SchemaError) as validation_errors:
-            print_validation_errors(weather_stations, validation_errors)
+            log_validation_errors(weather_stations, validation_errors)
 
 
 def transform_validate_store_ws(
@@ -163,20 +170,20 @@ def transform_validate_store_ws(
     inndata_ws_df = transform_ws_to_inndata(weather_stations)
     target_path = replace_directory(filepath, target_dir)
     write_parquet_file(target_path, inndata_ws_df)
-    print(f"Saving file {target_path}")
+    logger.info("Saving file %s", target_path)
 
 
 def process_observation_file(filepath: Path | str, target_dir: Path | str) -> None:
     """Process a weather observations file."""
-    print(f"Processing file {filepath}")
+    logger.info("Processing weather observations file %s", filepath)
     observations = read_parquet_file(filepath)
     try:
         inndata_obs_df = transform_obs_to_inndata(observations)
         target_path = replace_directory(filepath, target_dir)
         write_parquet_file(target_path, inndata_obs_df)
-        print(f"Saving file {target_path}")
+        logger.info("Saving file %s", target_path)
     except (SchemaErrors, SchemaError) as validation_errors:
-        print_validation_errors(observations, validation_errors)
+        log_validation_errors(observations, validation_errors)
 
 
 def autocorrect_ws(
@@ -192,13 +199,14 @@ def autocorrect_ws(
     fixed_weather_stations = weather_stations[
         weather_stations["id"] != "SN499999010"
     ].copy()
-    print("Removing weather station with id 'SN499999010' from dataset")
+    logger.warning("Removing weather station with id 'SN499999010' from dataset")
     return fixed_weather_stations
 
 
 def run_all() -> None:
     """Run the code in this module."""
-    print(f"Running {Path(__file__).name}")
+    logger.info("Running %s", Path(__file__).name)
+    logger.info("Using environment: %s", settings.env_for_dynaconf)
     source_dir = settings.pre_inndata_dir
     target_dir = settings.inndata_dir
     create_dir_if_not_exist(target_dir)
@@ -217,4 +225,5 @@ def run_all() -> None:
 
 
 if __name__ == "__main__":
+    root_logger = StatLogger()
     run_all()

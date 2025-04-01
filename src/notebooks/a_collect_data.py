@@ -92,7 +92,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
 
     today_str = date.today().isoformat()
     if from_date_str == today_str:
-        logging.info("No new observations to collect.")
+        logger.info("No new observations to collect.")
         return []
 
     endpoint = "https://frost.met.no/observations/v0.jsonld"
@@ -110,11 +110,11 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
         "timeoffsets": "default",
     }
     data = fetch_data(endpoint, parameters)
-    logging.info("Data retrieved from frost.met.no!")
+    logger.info("Data retrieved from frost.met.no!")
 
     filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}.json"
     observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
-    logging.info("Storing to %s", observations_file)
+    logger.info("Storing to %s", observations_file)
 
     write_json_file(observations_file, data)
     return data
@@ -137,7 +137,7 @@ def frost_client_id() -> str:
     try:
         client_id: str | None = get_secret_version(settings.gcp_project_id, secret_id)
     except DefaultCredentialsError as e:
-        logging.warning(
+        logger.warning(
             "Error: Unable to find GSM credentials. %s Fallback to use .env file.", e
         )
         load_dotenv()
@@ -274,11 +274,11 @@ def extract_latest_date_from_filename(filename: str) -> date | None:
 
 def run_all() -> None:
     """Run the code in this module."""
-    logging.info("Running %s", Path(__file__).name)
+    logger.info("Running %s", Path(__file__).name)
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
-    logging.info("Using environment: %s", settings.env_for_dynaconf)
-    logging.info("Start collecting data.")
+    logger.info("Using environment: %s", settings.env_for_dynaconf)
+    logger.info("Start collecting data.")
     weather_station_list = get_weather_stations()
     selected_weather_station_ids = get_weather_stations_ids(
         settings.weather_station_names, weather_station_list
