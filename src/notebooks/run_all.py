@@ -18,9 +18,12 @@
 # Kommenter ut de bitene du vil at den ikke skal kjøre.
 
 # %%
-import a_collect_data  # type: ignore
-import b_kildomat_local  # type: ignore
-import c_pre_inndata_to_inndata  # type: ignore
+import logging
+
+import a_collect_data
+import b_kildomat_local
+import c_pre_inndata_to_inndata
+from fagfunksjoner.log.statlogger import StatLogger
 
 
 # %%
@@ -33,4 +36,9 @@ def main() -> None:
 
 # %%
 if __name__ == "__main__":
+    root_logger = StatLogger()
+    # Don't print debug logs from these third-party libraries
+    logging.getLogger("google").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
     main()

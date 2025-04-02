@@ -219,3 +219,6 @@ rsconnect/
 
 # Data files
 data/
+
+# Qodo
+.qodo

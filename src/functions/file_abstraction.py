@@ -205,7 +205,9 @@ def directory_diff(
         target_filenames = {t.rsplit("/", 1)[-1] for t in target_file_strings}
         new_filenames = source_filenames - target_filenames
         new_files_with_path = [
-            s for s in source_file_strings if s.rsplit("/", 1)[-1] in new_filenames
+            s  # type: ignore
+            for s in source_file_strings
+            if s.rsplit("/", 1)[-1] in new_filenames
         ]
         return sorted(new_files_with_path)
     else:

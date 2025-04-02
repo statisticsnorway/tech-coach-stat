@@ -4,6 +4,7 @@
 #
 # FROST_CLIENT_ID="5dc4-mange-nummer-e71cc"
 
+import logging
 import os
 import re
 from collections.abc import Iterable
@@ -17,6 +18,7 @@ import requests
 from dapla import FileClient
 from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
+from fagfunksjoner.log.statlogger import StatLogger
 from google.auth.exceptions import DefaultCredentialsError
 
 from config.config import settings
@@ -26,6 +28,9 @@ from functions.file_abstraction import read_json_file
 from functions.file_abstraction import write_json_file
 from functions.versions import get_latest_file_version
 from functions.versions import get_next_file_version
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_weather_stations() -> list[dict[str, Any]]:
@@ -61,7 +66,7 @@ def get_weather_stations() -> list[dict[str, Any]]:
             )
 
         write_json_file(next_file, data)
-        print(f"Storing to {next_file}")
+        logger.info("Storing to %s", next_file)
     return data
 
 
@@ -87,7 +92,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
 
     today_str = date.today().isoformat()
     if from_date_str == today_str:
-        print("No new observations to collect.")
+        logger.info("No new observations to collect.")
         return []
 
     endpoint = "https://frost.met.no/observations/v0.jsonld"
@@ -105,11 +110,11 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
         "timeoffsets": "default",
     }
     data = fetch_data(endpoint, parameters)
-    print("Data retrieved from frost.met.no!")
+    logger.info("Data retrieved from frost.met.no!")
 
     filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}.json"
     observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
-    print(f"Storing to {observations_file}")
+    logger.info("Storing to %s", observations_file)
 
     write_json_file(observations_file, data)
     return data
@@ -132,7 +137,9 @@ def frost_client_id() -> str:
     try:
         client_id: str | None = get_secret_version(settings.gcp_project_id, secret_id)
     except DefaultCredentialsError as e:
-        print(f"Error: Unable to find GSM credentials. {e} Fallback to use .env file.")
+        logger.warning(
+            "Error: Unable to find GSM credentials. %s Fallback to use .env file.", e
+        )
         load_dotenv()
         client_id = os.getenv(secret_id)
 
@@ -236,7 +243,7 @@ def find_latest_date_in_files(files: Iterable[str] | Iterable[Path]) -> date | N
     for file in files:
         file_name = file.name if isinstance(file, Path) else file
         extracted_date = extract_latest_date_from_filename(file_name)
-        if extracted_date and (latest_date is None or extracted_date > latest_date):  # type: ignore[unreachable]
+        if extracted_date and (latest_date is None or extracted_date > latest_date):
             latest_date = extracted_date
     return latest_date
 
@@ -267,11 +274,11 @@ def extract_latest_date_from_filename(filename: str) -> date | None:
 
 def run_all() -> None:
     """Run the code in this module."""
-    print(f"Running {Path(__file__).name}")
+    logger.info("Running %s", Path(__file__).name)
     create_dir_if_not_exist(settings.kildedata_root_dir)
 
-    print(f"Using environment: {settings.env_for_dynaconf}")
-    print("Start collecting data.")
+    logger.info("Using environment: %s", settings.env_for_dynaconf)
+    logger.info("Start collecting data.")
     weather_station_list = get_weather_stations()
     selected_weather_station_ids = get_weather_stations_ids(
         settings.weather_station_names, weather_station_list
@@ -280,4 +287,13 @@ def run_all() -> None:
 
 
 if __name__ == "__main__":
+    root_logger = StatLogger()
+    # logging.basicConfig(
+    #   level=logging.DEBUG,
+    #    format='%(asctime)s - %(levelname)s - %(message)s - %(name)s - [%(module)s.%(funcName)s #L%(lineno)s]'
+    # )
+    # Don't print debug logs from these third-party libraries
+    logging.getLogger("google").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+
     run_all()
