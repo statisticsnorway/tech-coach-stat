@@ -15,7 +15,7 @@
 [default]
 dapla_team = "tip-tutorials"
 short_name = "metstat"  # statistikkens kortnavn, metstat for meteorologisk statistikk
-environment = "test"    # Use "prod" for prod and "test" when test environment
+environment = "prod"
 gcp_project_id = "@format {this.dapla_team}-p-mb"
 kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-{this.environment}/{this.short_name}/frost/"
 product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-{this.environment}/{this.short_name}/"
@@ -25,6 +25,10 @@ weather_stations_file_prefix = "weather_stations"
 observations_file_prefix = "observations"
 collect_from_date = "2011-01-01"
 weather_station_names = ["OSLO - BLINDERN", "KONGSVINGER"]
+
+[default_test]
+environment = "test"
+gcp_project_id = "@format {this.dapla_team}-t-k4"
 
 [daplalab_files]
 kildedata_root_dir = "@format /buckets/kilde/{this.short_name}/frost/"
