@@ -19,6 +19,7 @@ from dapla import FileClient
 from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
 from fagfunksjoner.log.statlogger import StatLogger
+from google.api_core.exceptions import PermissionDenied
 from google.auth.exceptions import DefaultCredentialsError
 
 from config.config import settings
@@ -136,7 +137,7 @@ def frost_client_id() -> str:
 
     try:
         client_id: str | None = get_secret_version(settings.gcp_project_id, secret_id)
-    except DefaultCredentialsError as e:
+    except (DefaultCredentialsError, PermissionDenied) as e:
         logger.warning(
             "Error: Unable to find GSM credentials. %s Fallback to use .env file.", e
         )

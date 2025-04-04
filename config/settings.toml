@@ -15,9 +15,10 @@
 [default]
 dapla_team = "tip-tutorials"
 short_name = "metstat"  # statistikkens kortnavn, metstat for meteorologisk statistikk
+environment = "prod"
 gcp_project_id = "@format {this.dapla_team}-p-mb"
-kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-prod/{this.short_name}/frost/"
-product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-prod/{this.short_name}/"
+kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-{this.environment}/{this.short_name}/frost/"
+product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-{this.environment}/{this.short_name}/"
 pre_inndata_dir = "@format {this.product_root_dir}inndata/temp/pre-inndata/frost/"
 inndata_dir = "@format {this.product_root_dir}inndata/frost/"
 weather_stations_file_prefix = "weather_stations"
@@ -36,3 +37,7 @@ kildedata_root_dir = "@format ../data/{this.short_name}/kildedata/frost/"
 product_root_dir = "@format ../data/{this.short_name}/"
 pre_inndata_dir = "@format {this.product_root_dir}/inndata/temp/pre-inndata/frost/"
 inndata_dir = "@format {this.product_root_dir}/inndata/frost/"
+
+[default_test]
+environment = "test"
+gcp_project_id = "@format {this.dapla_team}-t-k4"
