@@ -1,6 +1,6 @@
 from functools import cache
 
-import pandera as pa
+import pandera.pandas as pa
 from klass import KlassClassification
 from pandera import DataFrameModel
 from pandera import Field
