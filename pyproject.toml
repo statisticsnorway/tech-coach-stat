@@ -1,28 +1,31 @@
-[tool.poetry]
+[project]
 name = "tech-coach-stat"
 version = "0.1.0"
 description = "Example of how to produce statistics for meteorological data."
-authors = ["arneso-ssb <81353974+arneso-ssb@users.noreply.github.com>"]
+authors = [{name = "Arne Sørli", email = "81353974+arneso-ssb@users.noreply.github.com"}]
 license = "MIT"
 readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "dapla-toolbelt >=4.0.0",
+    "dynaconf >=3.2",
+    "ipykernel >=6.29",
+    "python-dotenv >=1.0.1",
+    "ssb-klass-python >=0.0.11",
+    "pandera[mypy] >=0.26.0",
+    "isodate >=0.7.2",
+    "gcsfs >=2024.12.0",
+    "ssb-fagfunksjoner >=1.0.8",
+]
+
+[tool.poetry]
+requires-poetry = ">=2.0"
 # To include functions in Jupyter Notebooks from other parts of the directory tree,
 # without using ProjectRoot from ssb-fagfunksjoner.
 packages = [
-    { include = "functions", from = "src" },
     { include = "config" },
+    { include = "functions", from = "src" },
 ]
-
-[tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-dapla-toolbelt = ">=1.3.2"
-ipykernel = ">=6.15.3"
-python-dotenv = ">=1.0.1"
-dynaconf = ">=3.2.6"
-ssb-klass-python = ">=0.0.11"
-pandera = {extras = ["mypy"], version = ">=0.21.1"}
-isodate = ">=0.7.2"
-gcsfs = ">=2024.12.0"
-ssb-fagfunksjoner = ">=1.0.8"
 
 [tool.poetry.group.dev.dependencies]
 black = {extras = ["jupyter"], version = ">=24.4.2"}
@@ -38,7 +41,7 @@ ruff = ">=0.0.284"
 types-requests = ">=2.31.0.20240406"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.isort]

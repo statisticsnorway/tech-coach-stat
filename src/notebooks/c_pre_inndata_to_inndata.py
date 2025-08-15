@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import cast
 
 import pandas as pd
-import pandera as pa
+import pandera.pandas as pa
 from fagfunksjoner.log.statlogger import StatLogger
 from isodate import parse_duration
 from pandera.errors import SchemaError
