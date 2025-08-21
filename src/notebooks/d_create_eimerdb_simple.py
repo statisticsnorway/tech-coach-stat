@@ -1,0 +1,265 @@
+"""Simple eimerdb database builder for pandas DataFrame data.
+
+This is a simplified version of DatabaseBuilderAltinnEimerdb that works with
+pandas DataFrames from parquet files. It creates a single table based on the
+DataFrame structure rather than the complex multi-table setup needed for Altinn3 surveys.
+"""
+
+import logging
+
+import eimerdb as db
+import pandas as pd
+
+
+# Setup logging
+eimerdb_logger = logging.getLogger(__name__)
+eimerdb_logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+eimerdb_logger.addHandler(handler)
+
+
+class DatabaseBuilderSimpleEimerdb:
+    """A simplified class for creating an eimerdb datastorage from pandas DataFrames.
+
+    This class provides a straightforward way to create an eimerdb storage from
+    pandas DataFrame containing tabular data.
+
+    To use this class:
+    1. Create an instance:
+        db_builder = DatabaseBuilderSimpleEimerdb(
+            database_name="my-simple-storage",
+            storage_location="path/to/storage",
+            dataframe=my_dataframe,
+            table_name="observations"
+        )
+    2. Check the schema:
+        print(db_builder.schema)
+    3. Build the storage:
+        db_builder.build_storage()
+    4. Load data into database:
+        db_builder.load_data()
+    """
+
+    def __init__(
+        self,
+        database_name: str,
+        storage_location: str,
+        dataframe: pd.DataFrame,
+        table_name: str = "observations",
+    ) -> None:
+        """Initialize the simple database builder.
+
+        Args:
+            database_name: Name of the database
+            storage_location: Path where the database will be stored
+            dataframe: pandas DataFrame containing the data
+            table_name: Name of the table to create (default: "observations")
+        """
+        self.database_name = database_name
+        self.storage_location = storage_location
+        self.dataframe = dataframe
+        self.table_name = table_name
+        self._validate_inputs()
+
+        # Use a sample of the data to infer schema
+        self.sample_data = self._get_sample_data()
+        self.schema = self._create_schema_from_dataframe()
+
+    def _validate_inputs(self):
+        """Validate input parameters."""
+        if not isinstance(self.dataframe, pd.DataFrame):
+            raise TypeError("dataframe parameter must be a pandas DataFrame")
+
+        if self.dataframe.empty:
+            raise ValueError("DataFrame cannot be empty")
+
+        if not self.database_name or not isinstance(self.database_name, str):
+            raise ValueError("Database name must be a non-empty string")
+
+        if not self.storage_location or not isinstance(self.storage_location, str):
+            raise ValueError("Storage location must be a non-empty string")
+
+    def _get_sample_data(self) -> pd.DataFrame:
+        """Get a sample of the data to infer schema."""
+        try:
+            # Take first 1000 rows for schema inference if DataFrame is larger
+            sample_df = self.dataframe.head(1000)
+            eimerdb_logger.info(
+                f"Using sample data with shape: {sample_df.shape} from total: {self.dataframe.shape}"
+            )
+            return sample_df
+        except Exception as e:
+            raise ValueError(f"Error processing DataFrame: {e}")
+
+    def _create_schema_from_dataframe(self) -> list:
+        """Create eimerdb schema from DataFrame structure."""
+        schema = []
+
+        for col_name in self.sample_data.columns:
+            dtype = self.sample_data[col_name].dtype
+            col_def = {
+                "name": col_name,
+                "type": self._pandas_to_eimerdb_type(dtype),
+                "label": col_name.replace("_", " ").title(),
+                "app_editable": True,
+            }
+            schema.append(col_def)
+
+        return schema
+
+    def _pandas_to_eimerdb_type(self, pandas_dtype) -> str:
+        """Convert pandas dtype to eimerdb type."""
+        dtype_str = str(pandas_dtype).lower()
+
+        if "int" in dtype_str:
+            if "64" in dtype_str:
+                return "int64"
+            elif "32" in dtype_str:
+                return "int32"
+            else:
+                return "int16"
+        elif "float" in dtype_str:
+            return "float64"
+        elif "bool" in dtype_str:
+            return "bool_"
+        elif "datetime64" in dtype_str:
+            return "pa.timestamp(s)"
+        else:
+            # Default to string for object, string[python], etc.
+            return "string"
+
+    def __str__(self) -> str:
+        """String representation of the database builder."""
+        return (
+            f"DatabaseBuilderSimpleEimerdb\n"
+            f"Database name: {self.database_name}\n"
+            f"Storage location: {self.storage_location}\n"
+            f"DataFrame shape: {self.dataframe.shape}\n"
+            f"Table name: {self.table_name}\n"
+            f"Sample data shape: {self.sample_data.shape}\n"
+            f"Schema columns: {[col['name'] for col in self.schema]}"
+        )
+
+    def build_storage(self) -> None:
+        """Create the eimerdb storage and table."""
+        try:
+            # Create the database
+            db.create_eimerdb(
+                bucket_name=self.storage_location, db_name=self.database_name
+            )
+            eimerdb_logger.info(
+                f"Created eimerdb at {self.storage_location}/{self.database_name}"
+            )
+
+            # Connect to the database
+            conn = db.EimerDBInstance(self.storage_location, self.database_name)
+
+            # Create the table
+            conn.create_table(
+                table_name=self.table_name,
+                schema=self.schema,
+                partition_columns=None,  # No partitioning for simple case
+                editable=True,
+            )
+
+            eimerdb_logger.info(
+                f"Created table '{self.table_name}' with {len(self.schema)} columns"
+            )
+
+        except Exception as e:
+            eimerdb_logger.error(f"Error building storage: {e}")
+            raise
+
+    def load_data(self, batch_size: int = 10000) -> None:
+        """Load data from DataFrame into the database table."""
+        try:
+            # Connect to the database
+            conn = db.EimerDBInstance(self.storage_location, self.database_name)
+
+            # Process DataFrame in batches
+            total_rows = len(self.dataframe)
+            batches_inserted = 0
+
+            for start_idx in range(0, total_rows, batch_size):
+                end_idx = min(start_idx + batch_size, total_rows)
+                batch_df = self.dataframe.iloc[start_idx:end_idx].copy()
+
+                # Convert data types to ensure compatibility
+                batch_df = self._prepare_data_for_insertion(batch_df)
+
+                # Insert batch into database
+                conn.insert_table_data(table_name=self.table_name, data=batch_df)
+
+                batches_inserted += len(batch_df)
+                eimerdb_logger.info(
+                    f"Inserted batch of {len(batch_df)} rows (total: {batches_inserted}/{total_rows})"
+                )
+
+            eimerdb_logger.info(
+                f"Successfully loaded {total_rows} rows into table '{self.table_name}'"
+            )
+
+        except Exception as e:
+            eimerdb_logger.error(f"Error loading data: {e}")
+            raise
+
+    def _prepare_data_for_insertion(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Prepare DataFrame for insertion into eimerdb."""
+        df = df.copy()
+
+        # Convert datetime columns to proper format if needed
+        for col in df.columns:
+            if df[col].dtype.name.startswith("datetime64"):
+                # Ensure timezone-aware datetime
+                if df[col].dt.tz is None:
+                    df[col] = df[col].dt.tz_localize("UTC")
+
+        return df
+
+
+def main() -> None:
+    """Example usage of the DatabaseBuilderSimpleEimerdb."""
+    # Configuration
+    database_name = "frost-observations-db"
+    storage_location = "ssb-tip-tutorials-data-produkt-prod"
+    parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/observations_p2012-01-01_p2025-01-02.parquet"
+    table_name = "observations"
+
+    try:
+        # Load DataFrame from parquet file
+        print("Loading DataFrame from parquet file...")
+        df = pd.read_parquet(parquet_file)
+        print(f"Loaded DataFrame with shape: {df.shape}")
+
+        # Create database builder with DataFrame
+        db_builder = DatabaseBuilderSimpleEimerdb(
+            database_name=database_name,
+            storage_location=storage_location,
+            dataframe=df,
+            table_name=table_name,
+        )
+
+        print("\nDatabase Builder Information:")
+        print(db_builder)
+        print("\nDetailed Schema:")
+        for col in db_builder.schema:
+            print(f"  {col['name']}: {col['type']} - {col['label']}")
+
+        # Build the storage
+        print("\nBuilding storage...")
+        db_builder.build_storage()
+
+        # Load data
+        print("\nLoading data into database...")
+        db_builder.load_data()
+
+        print("\nDatabase successfully created and populated!")
+
+    except Exception as e:
+        eimerdb_logger.error(f"Failed to create database: {e}")
+        raise
+
+
+if __name__ == "__main__":
+    main()
