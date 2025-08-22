@@ -66,9 +66,9 @@ class DatabaseBuilderAltinnEimerdb:
         """Initializes the databasebuilder for altinn3 surveys.
 
         Args:
-            database_name:
-            storage_location:
-            periods: str
+            database_name: The name of the database to be used.
+            storage_location: The bucket where data is saved.
+            periods (str): Time periods, provided as a string or list of strings.
         """
         self.database_name = database_name
         self.storage_location = storage_location
@@ -92,7 +92,6 @@ class DatabaseBuilderAltinnEimerdb:
             "type": "string",
             "label": "Identnummeret.",
         }
-
 
         schema_skjemamottak = [
             *periods_cols,
@@ -279,9 +278,11 @@ class DatabaseBuilderAltinnEimerdb:
         }
 
     def __str__(self) -> str:
+        """Returns a string representation of the DataStorageBuilderAltinnEimer instance."""
         return f"DataStorageBuilderAltinnEimer.\nDatabase name: {self.database_name}\nStorage location: {self.storage_location}\nPeriods variables: {self.periods}\n\nSchemas: {list(self.schemas.keys())}\nDetailed schemas:\n{json.dumps(self.schemas, indent=2, default=str)}"
 
     def build_storage(self) -> None:
+        """Builds and initializes a storage system using EimerDB with provided configurations."""
         db.create_eimerdb(bucket_name=self.storage_location, db_name=self.database_name)
         conn = db.EimerDBInstance(self.storage_location, self.database_name)
 

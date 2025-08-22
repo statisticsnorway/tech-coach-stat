@@ -9,6 +9,7 @@ import logging
 
 import eimerdb as db
 import pandas as pd
+from pandas._typing import Dtype
 
 
 # Setup logging
@@ -90,7 +91,7 @@ class DatabaseBuilderSimpleEimerdb:
             )
             return sample_df
         except Exception as e:
-            raise ValueError(f"Error processing DataFrame: {e}")
+            raise ValueError(f"Error processing DataFrame: {e}") from e
 
     def _create_schema_from_dataframe(self) -> list:
         """Create eimerdb schema from DataFrame structure."""
@@ -108,7 +109,7 @@ class DatabaseBuilderSimpleEimerdb:
 
         return schema
 
-    def _pandas_to_eimerdb_type(self, pandas_dtype) -> str:
+    def _pandas_to_eimerdb_type(self, pandas_dtype: Dtype) -> str:
         """Convert pandas dtype to eimerdb type."""
         dtype_str = str(pandas_dtype).lower()
 
@@ -171,52 +172,6 @@ class DatabaseBuilderSimpleEimerdb:
             eimerdb_logger.error(f"Error building storage: {e}")
             raise
 
-    def load_data(self, batch_size: int = 10000) -> None:
-        """Load data from DataFrame into the database table."""
-        try:
-            # Connect to the database
-            conn = db.EimerDBInstance(self.storage_location, self.database_name)
-
-            # Process DataFrame in batches
-            total_rows = len(self.dataframe)
-            batches_inserted = 0
-
-            for start_idx in range(0, total_rows, batch_size):
-                end_idx = min(start_idx + batch_size, total_rows)
-                batch_df = self.dataframe.iloc[start_idx:end_idx].copy()
-
-                # Convert data types to ensure compatibility
-                batch_df = self._prepare_data_for_insertion(batch_df)
-
-                # Insert batch into database
-                conn.insert_table_data(table_name=self.table_name, data=batch_df)
-
-                batches_inserted += len(batch_df)
-                eimerdb_logger.info(
-                    f"Inserted batch of {len(batch_df)} rows (total: {batches_inserted}/{total_rows})"
-                )
-
-            eimerdb_logger.info(
-                f"Successfully loaded {total_rows} rows into table '{self.table_name}'"
-            )
-
-        except Exception as e:
-            eimerdb_logger.error(f"Error loading data: {e}")
-            raise
-
-    def _prepare_data_for_insertion(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Prepare DataFrame for insertion into eimerdb."""
-        df = df.copy()
-
-        # Convert datetime columns to proper format if needed
-        for col in df.columns:
-            if df[col].dtype.name.startswith("datetime64"):
-                # Ensure timezone-aware datetime
-                if df[col].dt.tz is None:
-                    df[col] = df[col].dt.tz_localize("UTC")
-
-        return df
-
 
 def main() -> None:
     """Example usage of the DatabaseBuilderSimpleEimerdb."""
@@ -224,6 +179,9 @@ def main() -> None:
     database_name = "frost-observations-db"
     storage_location = "ssb-tip-tutorials-data-produkt-prod"
     parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/observations_p2012-01-01_p2025-01-02.parquet"
+    # storage_location = "arneso-test-bucket"
+    # parquet_file = "gs://arneso-test-bucket/data/metstat/inndata/frost/observations_p2011-01-01_p2025-04-29.parquet"
+
     table_name = "observations"
 
     try:
@@ -250,11 +208,7 @@ def main() -> None:
         print("\nBuilding storage...")
         db_builder.build_storage()
 
-        # Load data
-        print("\nLoading data into database...")
-        db_builder.load_data()
-
-        print("\nDatabase successfully created and populated!")
+        print("\nDatabase successfully created.")
 
     except Exception as e:
         eimerdb_logger.error(f"Failed to create database: {e}")
