@@ -46,7 +46,7 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
         print(observations.head())
         return
 
-    wide = observations.pivot_table(
+    wide_df = observations.pivot_table(
         index=["sourceId", "observationDate"],
         columns="elementId",
         values="value",
@@ -54,12 +54,21 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
     ).sort_index()
 
     # Flatten columns and bring sourceId/observationDate back as columns
-    wide.columns.name = None
-    wide = wide.reset_index()
+    wide_df.columns.name = None
+    wide_df = wide_df.reset_index()
+    wide_df = wide_df.rename(
+        columns={
+            "max(air_temperature P1D)": "max_air_temp",
+            "mean(air_temperature P1D)": "mean_air_temp",
+            "min(air_temperature P1D)": "min_air_temp",
+            "max(wind_speed P1D)": "max_wind_speed",
+            "sum(precipitation_amount P1D)": "precipitation",
+        }
+    )
 
-    logger.info("Transformed to wide format with shape %s", wide.shape)
+    logger.info("Transformed to wide format with shape %s", wide_df.shape)
     target_path = replace_directory(filepath, target_dir)
-    write_parquet_file(target_path, wide)
+    write_parquet_file(target_path, wide_df)
     logger.info("Saving file %s", target_dir)
 
 
