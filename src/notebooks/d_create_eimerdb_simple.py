@@ -24,16 +24,15 @@ class DatabaseBuilderSimpleEimerdb:
     """A simplified class for creating an eimerdb datastorage from pandas DataFrames.
 
     This class provides a straightforward way to create an eimerdb storage from
-    pandas DataFrame containing tabular data.
+    a pandas DataFrame containing tabular data.
 
     To use this class:
     1. Create an instance:
         db_builder = DatabaseBuilderSimpleEimerdb(
             database_name="my-simple-storage",
-            storage_location="path/to/storage",
+            bucket="my-bucket",
             dataframe=my_dataframe,
-            table_name="observations"
-        )
+            table_name="my_table_name")
     2. Check the schema:
         print(db_builder.schema)
     3. Build the storage:
@@ -45,7 +44,7 @@ class DatabaseBuilderSimpleEimerdb:
     def __init__(
         self,
         database_name: str,
-        storage_location: str,
+        bucket: str,
         dataframe: pd.DataFrame,
         table_name: str = "observations",
     ) -> None:
@@ -53,12 +52,12 @@ class DatabaseBuilderSimpleEimerdb:
 
         Args:
             database_name: Name of the database
-            storage_location: Path where the database will be stored
+            bucket: Name of the bucket to store the database, example: ssb-tip-tutorials-data-produkt-prod
             dataframe: pandas DataFrame containing the data
-            table_name: Name of the table to create (default: "observations")
+            table_name: Name of the table to create
         """
         self.database_name = database_name
-        self.storage_location = storage_location
+        self.bucket = bucket
         self.dataframe = dataframe
         self.table_name = table_name
         self._validate_inputs()
@@ -78,7 +77,7 @@ class DatabaseBuilderSimpleEimerdb:
         if not self.database_name or not isinstance(self.database_name, str):
             raise ValueError("Database name must be a non-empty string")
 
-        if not self.storage_location or not isinstance(self.storage_location, str):
+        if not self.bucket or not isinstance(self.bucket, str):
             raise ValueError("Storage location must be a non-empty string")
 
     def _get_sample_data(self) -> pd.DataFrame:
@@ -135,7 +134,7 @@ class DatabaseBuilderSimpleEimerdb:
         return (
             f"DatabaseBuilderSimpleEimerdb\n"
             f"Database name: {self.database_name}\n"
-            f"Storage location: {self.storage_location}\n"
+            f"Bucket: {self.bucket}\n"
             f"DataFrame shape: {self.dataframe.shape}\n"
             f"Table name: {self.table_name}\n"
             f"Sample data shape: {self.sample_data.shape}\n"
@@ -146,15 +145,13 @@ class DatabaseBuilderSimpleEimerdb:
         """Create the eimerdb storage and table."""
         try:
             # Create the database
-            db.create_eimerdb(
-                bucket_name=self.storage_location, db_name=self.database_name
-            )
+            db.create_eimerdb(bucket_name=self.bucket, db_name=self.database_name)
             eimerdb_logger.info(
-                f"Created eimerdb at {self.storage_location}/{self.database_name}"
+                f"Created eimerdb at {self.bucket}/{self.database_name}"
             )
 
             # Connect to the database
-            conn = db.EimerDBInstance(self.storage_location, self.database_name)
+            conn = db.EimerDBInstance(self.bucket, self.database_name)
 
             # Create the table
             conn.create_table(
@@ -177,9 +174,9 @@ def main() -> None:
     """Example usage of the DatabaseBuilderSimpleEimerdb."""
     # Configuration
     database_name = "frost-observations-db"
-    storage_location = "ssb-tip-tutorials-data-produkt-prod"
+    bucket = "ssb-tip-tutorials-data-produkt-prod"
     parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/observations_p2012-01-01_p2025-01-02.parquet"
-    # storage_location = "arneso-test-bucket"
+    # bucket = "arneso-test-bucket"
     # parquet_file = "gs://arneso-test-bucket/data/metstat/inndata/frost/observations_p2011-01-01_p2025-04-29.parquet"
 
     table_name = "observations"
@@ -193,7 +190,7 @@ def main() -> None:
         # Create database builder with DataFrame
         db_builder = DatabaseBuilderSimpleEimerdb(
             database_name=database_name,
-            storage_location=storage_location,
+            bucket=bucket,
             dataframe=df,
             table_name=table_name,
         )

@@ -44,7 +44,7 @@ class DatabaseBuilderAltinnEimerdb:
     1. Create an instance of the class.
         db_builder = DatabaseBuilderAltinnEimerdb(
             database_name = "my-survey-storage",
-            storage_location = "path/to/storage",
+            bucket = "path/to/storage",
             periods = "year"
         )
     2. Now that we have our builder ready, check that the schemas are correct.

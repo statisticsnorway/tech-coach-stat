@@ -21,6 +21,8 @@ kildedata_root_dir = "@format gs://ssb-{this.dapla_team}-data-kilde-{this.enviro
 product_root_dir = "@format gs://ssb-{this.dapla_team}-data-produkt-{this.environment}/{this.short_name}/"
 pre_inndata_dir = "@format {this.product_root_dir}inndata/temp/pre-inndata/frost/"
 inndata_dir = "@format {this.product_root_dir}inndata/frost/"
+klargjort_dir = "@format {this.product_root_dir}klargjorte-data/frost/"
+pre_edit_dir = "@format {this.product_root_dir}klargjorte-data/temp/pre-edit/frost/"
 weather_stations_file_prefix = "weather_stations"
 observations_file_prefix = "observations"
 collect_from_date = "2011-01-01"
@@ -31,12 +33,16 @@ kildedata_root_dir = "@format /buckets/kilde/{this.short_name}/frost/"
 product_root_dir = "@format /buckets/produkt/{this.short_name}/"
 pre_inndata_dir = "@format {this.product_root_dir}/inndata/temp/pre-inndata/frost/"
 inndata_dir = "@format {this.product_root_dir}/inndata/frost/"
+klargjort_dir = "@format {this.product_root_dir}/klargjorte-data/frost/"
+pre_edit_dir = "@format {this.product_root_dir}/klargjorte-data/temp/pre-edit/frost/"
 
 [local_files]  # Relative paths to the config directory
 kildedata_root_dir = "@format ../data/{this.short_name}/kildedata/frost/"
 product_root_dir = "@format ../data/{this.short_name}/"
 pre_inndata_dir = "@format {this.product_root_dir}/inndata/temp/pre-inndata/frost/"
 inndata_dir = "@format {this.product_root_dir}/inndata/frost/"
+klargjort_dir = "@format {this.product_root_dir}/klargjorte-data/frost/"
+pre_edit_dir = "@format {this.product_root_dir}/klargjorte-data/temp/pre-edit/frost/"
 
 [default_test]
 environment = "test"

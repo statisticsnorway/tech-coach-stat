@@ -40,13 +40,15 @@ settings = Dynaconf(
     settings_files=["settings.toml"],
     envvar_prefix="DYNACONF",
     environments=True,
-    env="daplalab_files",  # Change this to switch environment: default, default_test, daplalab_files or local_files
+    env="local_files",  # Change this to switch environment: default, default_test, daplalab_files or local_files
     validators=[
         Validator(
             "kildedata_root_dir",
             "product_root_dir",
             "pre_inndata_dir",
             "inndata_dir",
+            "klargjort_dir",
+            "pre_edit_dir",
             must_exist=True,
             condition=_is_valid_gcs_directory,
             env="default",
@@ -56,6 +58,8 @@ settings = Dynaconf(
             "product_root_dir",
             "pre_inndata_dir",
             "inndata_dir",
+            "klargjort_dir",
+            "pre_edit_dir",
             must_exist=True,
             cast=Path,
             env="daplalab_files",
@@ -65,6 +69,8 @@ settings = Dynaconf(
             "product_root_dir",
             "pre_inndata_dir",
             "inndata_dir",
+            "klargjort_dir",
+            "pre_edit_dir",
             must_exist=True,
             cast=_absolute_path,
             env="local_files",
