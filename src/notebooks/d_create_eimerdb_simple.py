@@ -161,7 +161,7 @@ def main() -> None:
     # Configuration
     database_name = "frost-observations-db"
     bucket = "ssb-tip-tutorials-data-produkt-prod"
-    parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-04-30_p2025-08-20.parquet"
+    parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-01-19_p2025-03-27.parquet"
     # bucket = "arneso-test-bucket"
     # parquet_file = "gs://arneso-test-bucket/data/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-04-30_p2025-08-20.parquet"
 
