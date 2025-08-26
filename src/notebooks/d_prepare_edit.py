@@ -36,7 +36,7 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
     obs_time = pd.to_datetime(
         observations["observationTime"], utc=True, errors="coerce"
     )
-    observations["observationDate"] = obs_time.dt.date
+    observations["observationDate"] = obs_time.dt.normalize()
 
     # Pivot to wide format: index=[sourceId, observationDate], columns=elementId, values=value
     required_cols = {"sourceId", "elementId", "value", "observationDate"}
@@ -65,6 +65,11 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
             "sum(precipitation_amount P1D)": "precipitation",
         }
     )
+
+    # Add year and month columns derived from observationDate
+    obs_dt = pd.to_datetime(wide_df["observationDate"], errors="coerce")
+    wide_df["year"] = obs_dt.dt.year
+    wide_df["month"] = obs_dt.dt.month
 
     logger.info("Transformed to wide format with shape %s", wide_df.shape)
     target_path = replace_directory(filepath, target_dir)
