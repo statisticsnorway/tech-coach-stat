@@ -62,8 +62,7 @@ class DatabaseBuilderSimpleEimerdb:
         self.table_name = table_name
         self._validate_inputs()
 
-        # Use a sample of the data to infer schema
-        self.sample_data = self._get_sample_data()
+        # Create schema from the full DataFrame
         self.schema = self._create_schema_from_dataframe()
 
     def _validate_inputs(self):
@@ -80,24 +79,12 @@ class DatabaseBuilderSimpleEimerdb:
         if not self.bucket or not isinstance(self.bucket, str):
             raise ValueError("Storage location must be a non-empty string")
 
-    def _get_sample_data(self) -> pd.DataFrame:
-        """Get a sample of the data to infer schema."""
-        try:
-            # Take first 1000 rows for schema inference if DataFrame is larger
-            sample_df = self.dataframe.head(1000)
-            eimerdb_logger.info(
-                f"Using sample data with shape: {sample_df.shape} from total: {self.dataframe.shape}"
-            )
-            return sample_df
-        except Exception as e:
-            raise ValueError(f"Error processing DataFrame: {e}") from e
-
     def _create_schema_from_dataframe(self) -> list:
         """Create eimerdb schema from DataFrame structure."""
         schema = []
 
-        for col_name in self.sample_data.columns:
-            dtype = self.sample_data[col_name].dtype
+        for col_name in self.dataframe.columns:
+            dtype = self.dataframe[col_name].dtype
             col_def = {
                 "name": col_name,
                 "type": self._pandas_to_eimerdb_type(dtype),
@@ -137,7 +124,6 @@ class DatabaseBuilderSimpleEimerdb:
             f"Bucket: {self.bucket}\n"
             f"DataFrame shape: {self.dataframe.shape}\n"
             f"Table name: {self.table_name}\n"
-            f"Sample data shape: {self.sample_data.shape}\n"
             f"Schema columns: {[col['name'] for col in self.schema]}"
         )
 
@@ -175,9 +161,9 @@ def main() -> None:
     # Configuration
     database_name = "frost-observations-db"
     bucket = "ssb-tip-tutorials-data-produkt-prod"
-    parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/observations_p2012-01-01_p2025-01-02.parquet"
+    parquet_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-04-30_p2025-08-20.parquet"
     # bucket = "arneso-test-bucket"
-    # parquet_file = "gs://arneso-test-bucket/data/metstat/inndata/frost/observations_p2011-01-01_p2025-04-29.parquet"
+    # parquet_file = "gs://arneso-test-bucket/data/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-04-30_p2025-08-20.parquet"
 
     table_name = "observations"
 
