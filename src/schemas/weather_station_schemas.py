@@ -1,5 +1,6 @@
 from functools import cache
 
+import pandas as pd
 import pandera.pandas as pa
 from klass import KlassClassification
 from pandera import DataFrameModel
@@ -26,6 +27,10 @@ class WeatherStationInndataSchema(DataFrameModel):
     countryCode: Series[str] = Field(str_length={"min_value": 2, "max_value": 2})
     masl: Series[int] = Field(gt=-500, le=9999, nullable=True)
     coordinates: Series[str] = pa.Field(alias="geometry.coordinates", nullable=True)
+    validFrom: Series[pd.DatetimeTZDtype] = Field(dtype_kwargs={"tz": "UTC"})
+    validTo: Series[pd.DatetimeTZDtype] | None = Field(
+        nullable=True, dtype_kwargs={"tz": "UTC"}
+    )
 
 
 class WeatherStationKlargjortSchema(DataFrameModel):

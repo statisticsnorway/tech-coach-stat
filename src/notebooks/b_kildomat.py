@@ -70,9 +70,9 @@ def process_weather_stations(source_file: Path | str, target_dir: Path | None) -
     for col in columns_to_convert:
         df[col] = df[col].astype("Int64")
     df["validFrom"] = pd.to_datetime(df["validFrom"])
-    df = df.astype(
-        {col: "string" for col in df.select_dtypes(include="object").columns}
-    )
+    if "validTo" in df.columns:
+        df["validTo"] = pd.to_datetime(df["validTo"])
+    df = df.astype(dict.fromkeys(df.select_dtypes(include="object").columns, "string"))
 
     target_filepath = get_target_filepath(source_file, target_dir)
     write_parquet_file(target_filepath, df)
@@ -108,9 +108,7 @@ def process_observations(source_file: Path | str, target_dir: Path | None) -> No
 
     # Convert datatypes
     df["referenceTime"] = pd.to_datetime(df["referenceTime"], utc=True)
-    df = df.astype(
-        {col: "string" for col in df.select_dtypes(include="object").columns}
-    )
+    df = df.astype(dict.fromkeys(df.select_dtypes(include="object").columns, "string"))
 
     target_filepath = get_target_filepath(source_file, target_dir)
     write_parquet_file(target_filepath, df)

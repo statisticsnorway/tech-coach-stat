@@ -189,17 +189,20 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
 def autocorrect_ws(
     weather_stations: pd.DataFrame, errors: SchemaErrors | SchemaError
 ) -> pd.DataFrame:
-    """Try to automatically corrects weather station data based on validation errors.
+    """Try to automatically correct weather station data based on validation errors.
 
     Corrections:
     1. Remove row with id 'SN499999010', if present. Have checked that this weather
         station is an iot device with incomplete data.
+    2. Remove rows with id `SN17781` and `SN9909000`. Missing shortName.
     """
-    # Drop row with id 'SN499999010'
+    weather_stations_to_remove = ["SN499999010", "SN17781", "SN9909000"]
     fixed_weather_stations = weather_stations[
-        weather_stations["id"] != "SN499999010"
+        ~weather_stations["id"].isin(weather_stations_to_remove)
     ].copy()
-    logger.warning("Removing weather station with id 'SN499999010' from dataset")
+    logger.warning(
+        "Removing weather station with id 'SN499999010', `SN17781` and `SN9909000` from dataset"
+    )
     return fixed_weather_stations
 
 

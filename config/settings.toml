@@ -27,6 +27,7 @@ weather_stations_file_prefix = "weather_stations"
 observations_file_prefix = "observations"
 collect_from_date = "2011-01-01"
 weather_station_names = ["OSLO - BLINDERN", "KONGSVINGER"]
+start_date = "2011-01-01"
 
 [daplalab_files]
 kildedata_root_dir = "@format /buckets/kilde/{this.short_name}/frost/"

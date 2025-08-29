@@ -23,6 +23,7 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
     - Add observationDate (date part of observationTime)
     - One row per sourceId and observationDate
     - One column per elementId containing its value.
+    - Add columns for year and month, used for editing.
     """
     logger.info("Processing observation file %s", filepath)
     observations = read_parquet_file(filepath)

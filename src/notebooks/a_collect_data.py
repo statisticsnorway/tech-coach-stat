@@ -44,9 +44,7 @@ def get_weather_stations() -> list[dict[str, Any]]:
         The fetched weather stations and data about them.
     """
     endpoint = "https://frost.met.no/sources/v0.jsonld"
-    parameters = {
-        "country": "Norge",
-    }
+    parameters = {"country": "Norge", "validtime": f"{settings.start_date}/now"}
     data = fetch_data(endpoint, parameters)
 
     # Check if data is changed since last version and write new file if so
