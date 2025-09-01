@@ -279,6 +279,35 @@ def get_dir_files_filesystem(directory: Path, prefix: str | None = None) -> list
     ]
 
 
+def get_dir_files(
+    directory: Path | str, prefix: str | None = None
+) -> list[Path] | list[str]:
+    """Get a list of files within the specified directory.
+
+    This function retrieves all files in the provided directory.
+    Directories or files in subdirectories are excluded from the result.
+    If the optional `prefix` is defined, only filenames starting with this prefix are
+    returned.
+
+    Args:
+        directory: The directory to search for files. It must
+            be a valid existing directory.
+        prefix: An optional string to filter filenames that start with this prefix.
+
+    Returns:
+        A list of files matching the specified criteria.
+
+    Raises:
+        TypeError: If the provided `directory` is not a `pathlib.Path` or `str`.
+    """
+    if isinstance(directory, Path):
+        return get_dir_files_filesystem(directory, prefix)
+    elif isinstance(directory, str):
+        return get_dir_files_bucket(directory, prefix)
+    else:
+        raise TypeError("Type must be Path or string.")
+
+
 def replace_directory(filepath: Path | str, target_dir: Path | str) -> Path | str:
     """Keep the filename and replace the directory part with a new target_dir path.
 

@@ -6,8 +6,7 @@ from fagfunksjoner.log.statlogger import StatLogger
 
 from config.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
-from functions.file_abstraction import get_dir_files_bucket
-from functions.file_abstraction import get_dir_files_filesystem
+from functions.file_abstraction import get_dir_files
 from functions.file_abstraction import read_parquet_file
 from functions.file_abstraction import replace_directory
 from functions.file_abstraction import write_parquet_file
@@ -78,16 +77,6 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
     logger.info("Saving file %s", target_dir)
 
 
-def get_directory_files(directory: Path | str, prefix: str) -> list[Path] | list[str]:
-    """Get the list of files with a given prefix in a directory."""
-    if isinstance(directory, Path):
-        return get_dir_files_filesystem(directory, prefix)
-    elif isinstance(directory, str):
-        return get_dir_files_bucket(directory, prefix)
-    else:
-        raise TypeError("Type must be Path or string.")
-
-
 def run_all() -> None:
     """Run the code in this module."""
     logger.info("Running %s", Path(__file__).name)
@@ -96,9 +85,7 @@ def run_all() -> None:
     target_dir = settings.pre_edit_dir
     create_dir_if_not_exist(target_dir)
 
-    observation_files = get_directory_files(
-        source_dir, settings.observations_file_prefix
-    )
+    observation_files = get_dir_files(source_dir, settings.observations_file_prefix)
     if len(observation_files) > 0:
         process_observation_file(
             observation_files[-1], target_dir
