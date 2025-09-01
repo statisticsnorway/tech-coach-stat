@@ -189,7 +189,7 @@ def main() -> None:
     database_name = "frost-db"
     bucket = "ssb-tip-tutorials-data-produkt-prod"
     observations_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-01-19_p2025-03-27.parquet"
-    ws_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/weather_stations_v1.parquet"
+    ws_file = "gs://ssb-tip-tutorials-data-produkt-prod/metstat/inndata/frost/weather_stations_v2.parquet"
 
     # bucket = "arneso-test-bucket"
     # observations_file = "gs://arneso-test-bucket/data/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-04-30_p2025-08-20.parquet"
