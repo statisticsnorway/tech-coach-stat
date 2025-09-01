@@ -175,7 +175,7 @@ class DatabaseBuilderSimpleEimerdb:
                     editable=True,
                 )
                 eimerdb_logger.info(
-                    f"Created table '{self.table_names}' with {len(self.schemas)} columns"
+                    f"Created table '{table_name}' with {len(schema)} columns"
                 )
 
         except Exception as e:
