@@ -194,7 +194,7 @@ def main() -> None:
     # bucket = "arneso-test-bucket"
     # observations_file = "gs://arneso-test-bucket/data/metstat/klargjorte-data/temp/pre-edit/frost/observations_p2025-04-30_p2025-08-20.parquet"
     # ws_file = (
-    #     "gs://arneso-test-bucket/data/metstat/inndata/frost/weather_stations_v2.parquet"
+    #     "gs://arneso-test-bucket/data/metstat/inndata/frost/weather_stations_v3.parquet"
     # )
 
     table_names = ["observations", "weather_stations"]
