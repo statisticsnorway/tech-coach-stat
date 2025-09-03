@@ -32,7 +32,7 @@ def process_weather_station_file(
 
     db_weather_stations = get_db_table(frostdb, "weather_stations")
 
-    # Create DataFrame of new weather stations
+    # Handle new weather stations
     new_weather_stations = weather_stations[
         ~weather_stations["id"].isin(db_weather_stations["id"])
     ].copy()
@@ -45,26 +45,82 @@ def process_weather_station_file(
         logger.info("Shape of new weather stations: %s", new_weather_stations.shape)
 
         frostdb.insert("weather_stations", new_weather_stations)
-        get_db_table(frostdb, "weather_stations", "after insert")
+        get_db_table(frostdb, "weather_stations", extra_text="after insert")
     else:
         logger.info("No new weather stations in %s", filepath)
 
+    # Handle existing weather stations
+    existing_weather_stations = weather_stations[
+        weather_stations["id"].isin(db_weather_stations["id"])
+    ].copy()
+
+    # Find changed, non-edited weather stations and update them
+    none_edited_ws = get_db_table(frostdb, "weather_stations", edited=False)
+    db_only_columns = set(none_edited_ws.columns) - set(
+        existing_weather_stations.columns
+    )
+    cleaned_none_edited_ws = none_edited_ws.drop(columns=db_only_columns)
+
+    # Merge existing and non-edited weather stations to find differences
+    merged_ws = existing_weather_stations.merge(
+        cleaned_none_edited_ws, on="id", how="inner", suffixes=("_new", "_old")
+    )
+
+    # Find rows where at least one column differs (excluding "id")
+    mask = (
+        merged_ws.filter(like="_new").values != merged_ws.filter(like="_old").values
+    ).any(axis=1)
+
+    # Get the differing rows from df1
+    diff = existing_weather_stations[
+        existing_weather_stations["id"].isin(merged_ws.loc[mask, "id"])
+    ]
+
+    # Get common columns except 'id' to compare
+    compare_cols = [col for col in existing_weather_stations.columns if col != "id"]
+
+    # Filter rows where any column values differ
+    diff_mask = False
+    for col in compare_cols:
+        diff_mask = diff_mask | (merged_ws[f"{col}_new"] != merged_ws[f"{col}_old"])
+
+    # Create update dataframe with rows that need updating
+    update_ws = existing_weather_stations[
+        existing_weather_stations["id"].isin(merged_ws.loc[diff_mask, "id"])
+    ].copy()
+
+    logger.info("Shape of weather stations to update: %s", update_ws.shape)
+
 
 def get_db_table(
-    conn: db.EimerDBInstance, table_name: str, extra_text: str | None = None
+    conn: db.EimerDBInstance,
+    table_name: str,
+    edited: bool | None = None,
+    extra_text: str | None = None,
 ) -> pd.DataFrame:
     """Get a database table as a pandas Dataframe.
 
     Args:
         conn: The database connection instance to execute the query.
         table_name: The name of the table to query.
+        edited: Optional flag for returning edited or unedited rows. When None, all rows are returned.
         extra_text: Optional additional text to include in the log message.
 
     Returns:
         A DataFrame containing all rows from the specified table.
     """
-    db_table_df = conn.query(f"SELECT * FROM {table_name}")
-    logger.info("Shape of db_%s %s: %s", table_name, extra_text, db_table_df.shape)
+    if edited is None:
+        db_table_df = conn.query(f"SELECT * FROM {table_name}")
+        logger.info("Shape of db_%s %s: %s", table_name, extra_text, db_table_df.shape)
+    else:
+        db_table_df = conn.query(f"SELECT * FROM {table_name}", unedited=not edited)
+        logger.info(
+            "Shape of db_%s, edited=%s %s: %s",
+            table_name,
+            edited,
+            extra_text,
+            db_table_df.shape,
+        )
     return db_table_df
 
 
