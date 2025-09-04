@@ -14,11 +14,42 @@ from pandas.api.types import is_datetime64_any_dtype
 logger = logging.getLogger(__name__)
 
 
-def process_observation_file(filepath: Path | str) -> None:
+def process_observation_file(filepath: Path | str, bucket: str, db_name: str) -> None:
     """Load an observation file into eimerdb."""
     logger.info("Processing observation file %s", filepath)
     observations = read_parquet_file(filepath)
     logger.info("Shape of observations: %s", observations.shape)
+
+    frostdb = db.EimerDBInstance(bucket, db_name)
+
+    db_observations = get_db_table(frostdb, "observations")
+    non_edited_obs = get_db_table(frostdb, "observations", edited=False)
+
+    # Handle new observations, rows with a different composite key (sourceId, observationDate)
+    key_cols = ["sourceId", "observationDate"]
+    for df in (
+        observations,
+        db_observations,
+    ):  # Normalize observationDate to UTC to ensure consistent comparisons
+        df["observationDate"] = pd.to_datetime(
+            df["observationDate"], utc=True, errors="coerce"
+        )
+    merged = observations.merge(
+        db_observations[key_cols].drop_duplicates(),
+        on=key_cols,
+        how="left",
+        indicator=True,
+    )
+    new_observations = (
+        merged.loc[merged["_merge"] == "left_only"].drop(columns="_merge").copy()
+    )
+
+    if len(new_observations) > 0:
+        logger.info("Shape of new observations: %s", new_observations.shape)
+        frostdb.insert("observations", new_observations)
+        get_db_table(frostdb, "observations", extra_text="after insert")
+    else:
+        logger.info("No new observations in %s", filepath)
 
 
 def process_weather_station_file(
@@ -76,7 +107,7 @@ def process_weather_station_file(
                     value = row[column]
                     if pd.isna(value):
                         set_clauses.append(f"{column} = NULL")
-                    elif isinstance(value, (pd.Timestamp, pd.DatetimeTZDtype)):
+                    elif isinstance(value, pd.Timestamp | pd.DatetimeTZDtype):
                         set_clauses.append(f"{column} = '{value}'")
                     elif isinstance(value, str):
                         set_clauses.append(f"{column} = '{value}'")
@@ -206,14 +237,16 @@ def run_all() -> None:
     logger.info("Using environment: %s", settings.env_for_dynaconf)
     obs_dir = settings.pre_edit_dir
     ws_dir = settings.inndata_dir
+    bucket = "arneso-test-bucket"
+    db_name = "frost-db"
 
-    ws_files = get_dir_files(ws_dir, prefix=settings.weather_stations_file_prefix)
-    for file in ws_files:
-        process_weather_station_file(file, "arneso-test-bucket", "frost-db")
+    # ws_files = get_dir_files(ws_dir, prefix=settings.weather_stations_file_prefix)
+    # for file in ws_files:
+    #     process_weather_station_file(file, bucket, db_name)
 
     obs_files = get_dir_files(obs_dir, prefix=settings.observations_file_prefix)
     for file in obs_files:
-        process_observation_file(file)
+        process_observation_file(file, bucket, db_name)
 
 
 if __name__ == "__main__":
