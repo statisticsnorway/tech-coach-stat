@@ -65,6 +65,9 @@ def process_weather_stations(source_file: Path | str, target_dir: Path | None) -
         errors="ignore",
     )
 
+    # Eimerdb does not handle '.' in column names, so rename such columns
+    df = df.rename(columns={"geometry.coordinates": "geometry_coordinates"})
+
     # Convert datatypes
     columns_to_convert = ["masl", "countyId", "municipalityId"]
     for col in columns_to_convert:
