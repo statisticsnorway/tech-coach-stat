@@ -26,7 +26,7 @@ def get_updated_rows(
         AssertionError: If any primary key column does not exist in either `new_df` or `old_df`.
     """
     # Normalize primary_key to list and validate
-    if not isinstance(primary_key, list) or len(primary_key) == 0:
+    if not isinstance(primary_key, list) or not primary_key:
         raise AssertionError("primary_key must be a non-empty list of column names")
     for key in primary_key:
         assert (key in new_df.columns) and (
@@ -82,15 +82,21 @@ def get_updated_rows(
     if diffs.empty:
         return None
 
-    # Extract changed rows, for multi-key case
-    if isinstance(diffs.index, pd.MultiIndex):
-        keys_for_rows_to_update = diffs.index.unique()
+    # Extract changed rows: compare with align_axis=0 adds an extra index level for the differing column(s).
+    idx = diffs.index
+    if isinstance(idx, pd.MultiIndex) and idx.nlevels > len(primary_key):
+        # Drop any extra levels beyond the primary key levels
+        levels_to_drop = list(range(len(primary_key), idx.nlevels))
+        idx = idx.droplevel(levels_to_drop)
+
+    if isinstance(idx, pd.MultiIndex):
+        keys_for_rows_to_update = idx.unique()
         keys_df = keys_for_rows_to_update.to_frame(index=False)
         keys_df.columns = primary_key
         updated_rows = new_df.merge(keys_df, on=primary_key, how="inner")
     else:
         # Single-key case represented as Index
-        ids_to_update = diffs.index.unique()
+        ids_to_update = idx.unique()
         updated_rows = new_df[new_df[primary_key[0]].isin(ids_to_update)].copy()
 
     return None if updated_rows.empty else updated_rows

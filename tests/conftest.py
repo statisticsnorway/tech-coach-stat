@@ -15,6 +15,10 @@ def ws_autocorrect() -> pd.DataFrame:
         "county": ["INNLANDET", None],
         "countryCode": ["NO", "NO"],
         "masl": [148, 0],
-        "geometry.coordinates": ["12.0067, 60.1903", "10.7167, 59.9333"],
+        "geometry_coordinates": ["12.0067, 60.1903", "10.7167, 59.9333"],
+        "validFrom": ["2006-07-01T00:00:00.000Z", None],
     }
-    return pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    # Ensure validFrom has dtype datetime64[ns, UTC]
+    df["validFrom"] = pd.to_datetime(df["validFrom"], utc=True)
+    return df
