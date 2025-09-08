@@ -86,10 +86,8 @@ def run_all() -> None:
     create_dir_if_not_exist(target_dir)
 
     observation_files = get_dir_files(source_dir, settings.observations_file_prefix)
-    if len(observation_files) > 0:
-        process_observation_file(
-            observation_files[-1], target_dir
-        )  # Process the latest observation file
+    for file in observation_files:
+        process_observation_file(file, target_dir)
 
 
 if __name__ == "__main__":
