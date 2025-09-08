@@ -1,3 +1,4 @@
+import json
 import tempfile
 from pathlib import Path
 
@@ -8,6 +9,7 @@ from pandas.testing import assert_frame_equal
 from config.config import settings
 from functions.file_abstraction import read_json_file
 from functions.file_abstraction import read_parquet_file
+from functions.file_abstraction import write_json_file
 from functions.file_abstraction import write_parquet_file
 from functions.ssbplatforms import is_dapla
 
@@ -38,3 +40,14 @@ def test_read_write_parquet_file_pathlib() -> None:
         write_parquet_file(filepath, original_df)
         result_df = read_parquet_file(filepath)
         assert_frame_equal(result_df, original_df)
+
+
+def test_write_json_file_pathlib() -> None:
+    data = [{"a": 1, "b": "x"}]
+    with tempfile.TemporaryDirectory() as temp_dir:
+        filepath = Path(temp_dir) / "test.json"
+        write_json_file(filepath, data)
+
+        with filepath.open("r", encoding="utf-8") as f:
+            loaded = json.load(f)
+        assert loaded == data
