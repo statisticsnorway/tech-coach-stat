@@ -5,6 +5,7 @@ import pytest
 from pytest_mock import MockerFixture
 
 from functions.file_abstraction import directory_diff
+from functions.file_abstraction import get_dir_files
 from functions.file_abstraction import get_dir_files_bucket
 from functions.file_abstraction import get_dir_files_filesystem
 from functions.file_abstraction import replace_directory
@@ -320,3 +321,77 @@ class TestReplaceDirectory:
         invalid_target_dir = "invalid_gcs_dir"
         with pytest.raises(ValueError, match="is not a gcs directory"):
             replace_directory(filepath, invalid_target_dir)
+
+
+class TestGetDirFiles:
+    # Delegates to filesystem implementation when directory is a Path and returns its result
+    def test_path_delegates_and_returns(self, mocker: MockerFixture) -> None:
+        # Arrange
+        directory = Path("/tmp/dir")
+        expected = [Path("/tmp/dir/a.txt"), Path("/tmp/dir/b.txt")]
+        mock_get = mocker.patch(
+            "functions.file_abstraction.get_dir_files_filesystem", return_value=expected
+        )
+
+        # Act
+        result = get_dir_files(directory)
+
+        # Assert
+        assert result == expected
+        mock_get.assert_called_once_with(directory, None)
+
+    # Delegates to bucket implementation when directory is a str (GCS) and returns its result
+    def test_str_delegates_and_returns(self, mocker: MockerFixture) -> None:
+        # Arrange
+        directory = "gs://bucket/dir/"
+        expected = ["gs://bucket/dir/a.txt", "gs://bucket/dir/b.txt"]
+        mock_get = mocker.patch(
+            "functions.file_abstraction.get_dir_files_bucket", return_value=expected
+        )
+
+        # Act
+        result = get_dir_files(directory)
+
+        # Assert
+        assert result == expected
+        mock_get.assert_called_once_with(directory, None)
+
+    # Raises TypeError when directory is neither Path nor str
+    def test_invalid_type_raises_typeerror(self) -> None:
+        with pytest.raises(TypeError) as exc_info:
+            get_dir_files(123)  # type: ignore[arg-type]
+        assert str(exc_info.value) == "Type must be Path or string."
+
+    # Passes prefix through for filesystem case
+    def test_passes_prefix_path(self, mocker: MockerFixture) -> None:
+        # Arrange
+        directory = Path("/tmp/dir")
+        prefix = "pre_"
+        expected = [Path("/tmp/dir/pre_a.txt")]
+        mock_get = mocker.patch(
+            "functions.file_abstraction.get_dir_files_filesystem", return_value=expected
+        )
+
+        # Act
+        result = get_dir_files(directory, prefix=prefix)
+
+        # Assert
+        assert result == expected
+        mock_get.assert_called_once_with(directory, prefix)
+
+    # Passes prefix through for bucket case
+    def test_passes_prefix_gcs(self, mocker: MockerFixture) -> None:
+        # Arrange
+        directory = "gs://bucket/dir/"
+        prefix = "pre_"
+        expected = ["gs://bucket/dir/pre_a.txt"]
+        mock_get = mocker.patch(
+            "functions.file_abstraction.get_dir_files_bucket", return_value=expected
+        )
+
+        # Act
+        result = get_dir_files(directory, prefix=prefix)
+
+        # Assert
+        assert result == expected
+        mock_get.assert_called_once_with(directory, prefix)

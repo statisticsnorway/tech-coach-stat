@@ -5,9 +5,9 @@ description = "Example of how to produce statistics for meteorological data."
 authors = [{name = "Arne Sørli", email = "81353974+arneso-ssb@users.noreply.github.com"}]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.10,<3.13"  # because of ssb-eimerdb, replace with < 4.0 when fixed in ssb-eimerdb
 dependencies = [
-    "dapla-toolbelt >=4.0.0",
+    "dapla-toolbelt >=3.0.0",
     "dynaconf >=3.2",
     "ipykernel >=6.29",
     "python-dotenv >=1.0.1",
@@ -16,6 +16,10 @@ dependencies = [
     "isodate >=0.7.2",
     "gcsfs >=2024.12.0",
     "ssb-fagfunksjoner >=1.0.8",
+    "ssb-dash-framework (>=0.1.0,<0.2.0)",
+    "ssb-eimerdb (>=0.2.4,<0.3.0)",
+    "dapla-auth-client (>=1.1.0,<2.0.0)",
+    "pyjwt (>=2.10.1,<3.0.0)",
 ]
 
 [tool.poetry]
