@@ -1,6 +1,6 @@
 import pandas as pd
-from pandera import DataFrameModel
-from pandera import Field
+from pandera.pandas import DataFrameModel
+from pandera.pandas import Field
 from pandera.typing import Series
 
 

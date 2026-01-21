@@ -11,7 +11,6 @@ from functions.file_abstraction import read_parquet_file
 from functions.file_abstraction import replace_directory
 from functions.file_abstraction import write_parquet_file
 
-
 logger = logging.getLogger(__name__)
 
 

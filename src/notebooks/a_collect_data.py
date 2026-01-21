@@ -16,8 +16,8 @@ from typing import cast
 
 import requests
 from dapla import FileClient
-from dapla.gsm import get_secret_version
 from dotenv import load_dotenv
+from fagfunksjoner.dapla.gsm import get_secret_version
 from fagfunksjoner.log.statlogger import StatLogger
 from google.api_core.exceptions import PermissionDenied
 from google.auth.exceptions import DefaultCredentialsError
@@ -29,7 +29,6 @@ from functions.file_abstraction import read_json_file
 from functions.file_abstraction import write_json_file
 from functions.versions import get_latest_file_version
 from functions.versions import get_next_file_version
-
 
 logger = logging.getLogger(__name__)
 

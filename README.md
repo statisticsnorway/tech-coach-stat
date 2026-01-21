@@ -18,8 +18,8 @@ Dette repoet brukes til to ting:
 ## Plattformer
 
 - Koden virker på:
-  - Dapla
   - DaplaLab, både med bøtter og filer, på både Jupyter og vscode.
+  - DaplaLab Test-miljø
   - Windows og Linux lokalt.
 
 ## Hva viser repoet?
@@ -40,11 +40,11 @@ Til nå viser repoet:
 - Datavalidering av dataframes med [Pandera]
 - Innhenting av kun nye observasjoner (sjekker sist innhentede)
 - Prossesering av kun av nye filer (sjekker hvem som er behandlet fra før)
+- Logging
 
 Det neste på blokka:
 
 - Datatilstand: Fram til klargjorte data.
-- Logging
 - Pseudonymisering
 
 ## Konfigurasjonsfil og miljøer
@@ -53,7 +53,8 @@ I `config`-katalogen ligger det `settings.toml`-fil hvor man setter opp felles
 konfigurasjon. Der definerer man blant annet navn på dapla-team, kortnavn på
 statistikken, filstier, perioder osv. Den definerer tre "miljøer":
 
-- **default:** Bruk av bøtter, enten på gamle Dapla eller på DaplaLab
+- **default:** Bruk av bøtter (gs://) på DaplaLab
+- **default_test:** Bruk av bøtter (gs://) på DaplaLab testmiljø.
 - **daplalab_files:** Bruk bøtter montert som filer på DaplaLab
 - **local_files:** Bruk av lokale filer under en `data`-katalog i repoet.
 

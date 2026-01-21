@@ -23,15 +23,33 @@ import logging
 import a_collect_data
 import b_kildomat_local
 import c_pre_inndata_to_inndata
+import d_prepare_edit
 from fagfunksjoner.log.statlogger import StatLogger
+
+from config.config import settings
+from functions.ssbplatforms import is_data_admin
 
 
 # %%
 def main() -> None:
     """Run all files."""
-    a_collect_data.run_all()
-    b_kildomat_local.run_all()
+    is_local_files = settings.env_for_dynaconf == "local_files"
+    is_admin = is_data_admin()
+
+    if is_admin or is_local_files:
+        a_collect_data.run_all()
+
+    # No access to further processing from the kildeproject
+    if is_admin:
+        return
+
+    # Only run kildomat if running locally
+    if is_local_files:
+        b_kildomat_local.run_all()
+
+    # Step C: Main production part, run from the standard project
     c_pre_inndata_to_inndata.run_all()
+    d_prepare_edit.run_all()
 
 
 # %%
