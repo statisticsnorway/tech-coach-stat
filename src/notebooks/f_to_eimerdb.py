@@ -10,7 +10,6 @@ from functions.file_abstraction import get_dir_files
 from functions.file_abstraction import read_parquet_file
 from functions.query import get_updated_rows
 
-
 logger = logging.getLogger(__name__)
 
 

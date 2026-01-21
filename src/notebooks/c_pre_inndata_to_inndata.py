@@ -23,7 +23,6 @@ from functions.versions import get_latest_file_version
 from schemas.observation_schemas import ObservationInndataSchema
 from schemas.weather_station_schemas import WeatherStationInndataSchema
 
-
 logger = logging.getLogger(__name__)
 
 

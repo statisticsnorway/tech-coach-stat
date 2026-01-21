@@ -13,7 +13,6 @@ from fagfunksjoner.log.statlogger import StatLogger
 from config.config import settings
 from functions.file_abstraction import create_dir_if_not_exist
 
-
 logger = logging.getLogger(__name__)
 
 

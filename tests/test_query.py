@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-
 from src.functions.query import get_updated_rows
 
 

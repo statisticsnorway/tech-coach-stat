@@ -11,7 +11,6 @@ import eimerdb as db
 import pandas as pd
 from pandas._typing import Dtype
 
-
 # Setup logging
 eimerdb_logger = logging.getLogger(__name__)
 eimerdb_logger.setLevel(logging.INFO)

@@ -2,7 +2,6 @@ from pathlib import Path
 
 import pandas as pd
 from pytest_mock import MockerFixture
-
 from src.notebooks.b_kildomat import process_observations
 from src.notebooks.b_kildomat import process_weather_stations
 

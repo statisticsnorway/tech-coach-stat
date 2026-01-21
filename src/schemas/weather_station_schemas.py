@@ -3,10 +3,9 @@ from functools import cache
 import pandas as pd
 import pandera.pandas as pa
 from klass import KlassClassification
-from pandera import DataFrameModel
-from pandera import Field
+from pandera.pandas import DataFrameModel
+from pandera.pandas import Field
 from pandera.typing import Series
-
 
 komm_nr_klass_id = "131"
 fylke_nr_klass_id = "104"

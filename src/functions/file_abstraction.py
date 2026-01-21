@@ -14,7 +14,6 @@ import gcsfs
 import pandas as pd
 from dapla import FileClient
 
-
 GS_URI_PREFIX = "gs://"
 
 
