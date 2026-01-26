@@ -65,6 +65,12 @@ def transform_ws_to_inndata(df: pd.DataFrame) -> DataFrame[WeatherStationInndata
     df["komm_nr"] = df["municipalityId"].astype(str).str.zfill(4).astype("string")
     df["fylke_nr"] = df["countyId"].astype(str).str.zfill(2).astype("string")
 
+    # Ensure datetime columns have timezone-aware UTC dtype as required by schema
+    if "validFrom" in df.columns:
+        df["validFrom"] = pd.to_datetime(df["validFrom"], utc=True, errors="coerce")
+    if "validTo" in df.columns:
+        df["validTo"] = pd.to_datetime(df["validTo"], utc=True, errors="coerce")
+
     # The pipe is used to cast the data type so that mypy understands the type
     return df.pipe(DataFrame[WeatherStationInndataSchema])
 
@@ -116,9 +122,24 @@ def log_validation_errors(df: pd.DataFrame, errors: SchemaErrors | SchemaError) 
     """
     logger.warning("Validation errors occurred")
     logger.info("Errors: %s", errors)
-    failure_cases = errors.failure_cases
-    failed_indices = failure_cases["index"].unique()
-    failed_rows = df.loc[failed_indices]
+
+    # Pandera raises either SchemaErrors (aggregate) or SchemaError (single).
+    # Handle both forms defensively when extracting the failing indices.
+    failed_rows: pd.DataFrame
+    failure_cases = getattr(errors, "failure_cases", None)
+    try:
+        if isinstance(failure_cases, pd.DataFrame) and "index" in failure_cases.columns:
+            failed_indices = failure_cases["index"].unique()
+            failed_rows = df.loc[failed_indices]
+        elif isinstance(failure_cases, dict) and "index" in failure_cases:
+            failed_indices = pd.Index(failure_cases["index"]).unique()
+            failed_rows = df.loc[failed_indices]
+        else:
+            # Fallback: unable to determine exact failing rows, store full df
+            failed_rows = df.copy()
+    except Exception:
+        failed_rows = df.copy()
+
     failed_rows.to_parquet("validation_errors.parquet", index=False)
     logger.info("Failed Rows:")
     logger.info("\n%s", failed_rows.to_string())

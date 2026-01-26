@@ -77,7 +77,7 @@ def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
     if isinstance(filepath, Path):
         df.to_parquet(filepath, index=False)
     elif isinstance(filepath, str):
-        dp.write_pandas(df=df, gcs_path=filepath, index=False)
+        dp.write_pandas(df=df, gcs_path=filepath)
 
 
 def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
@@ -197,8 +197,13 @@ def directory_diff(
         return sorted(new_files_with_path)
 
     elif isinstance(source_dir, str) and isinstance(target_dir, str):
+        # For GCS buckets: a non-existent target directory (prefix) should be treated as empty
+        # so that new files in source can be detected and processed.
         source_file_strings = get_dir_files_bucket(source_dir, prefix)
-        target_file_strings = get_dir_files_bucket(target_dir, prefix)
+        try:
+            target_file_strings = get_dir_files_bucket(target_dir, prefix)
+        except ValueError:
+            target_file_strings = []
         # Extract just the filenames from both lists of strings
         source_filenames = {s.rsplit("/", 1)[-1] for s in source_file_strings}
         target_filenames = {t.rsplit("/", 1)[-1] for t in target_file_strings}
