@@ -110,7 +110,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
     data = fetch_data(endpoint, parameters)
     logger.info("Data retrieved from frost.met.no!")
 
-    filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}.json"
+    filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}_v1.json"
     observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
     logger.info("Storing to %s", observations_file)
 
