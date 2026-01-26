@@ -45,6 +45,7 @@ pytest-mock = ">=3.14.0"
 ruff = ">=0.0.284"
 types-requests = ">=2.31.0.20240406"
 deptry = ">=0.24.0"
+dapla-toolbelt-metadata = "^0.13.0"
 
 [build-system]
 requires = ["poetry-core>=2.0"]
