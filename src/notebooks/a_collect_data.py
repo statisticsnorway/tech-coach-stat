@@ -27,8 +27,7 @@ from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import read_json_file
 from functions.file_abstraction import write_json_file
-from functions.versions import get_latest_file_version
-from functions.versions import get_next_file_version
+from functions.versions import get_latest_file_date
 
 logger = logging.getLogger(__name__)
 
@@ -51,17 +50,15 @@ def get_weather_stations() -> list[dict[str, Any]]:
         settings.kildedata_root_dir,
         f"{settings.weather_stations_file_prefix}.json",
     )
-    latest_file = get_latest_file_version(base_file)
+    latest_file = get_latest_file_date(base_file)
     latest_data = read_json_file(latest_file) if latest_file is not None else None
 
     if (not latest_data) or (data != latest_data):
-        if (latest_file_version := get_latest_file_version(base_file)) is not None:
-            next_file = get_next_file_version(latest_file_version)
-        else:
-            next_file = add_filename_to_path(  # No previous version, use _v1.json
-                settings.kildedata_root_dir,
-                f"{settings.weather_stations_file_prefix}_v1.json",
-            )
+        today_str = date.today().isoformat()
+        next_file = add_filename_to_path(
+            settings.kildedata_root_dir,
+            f"{settings.weather_stations_file_prefix}_p{today_str}_v1.json",
+        )
 
         write_json_file(next_file, data)
         logger.info("Storing to %s", next_file)

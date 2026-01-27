@@ -19,7 +19,7 @@ from functions.file_abstraction import directory_diff
 from functions.file_abstraction import read_parquet_file
 from functions.file_abstraction import replace_directory
 from functions.file_abstraction import write_parquet_file
-from functions.versions import get_latest_file_version
+from functions.versions import get_latest_file_date
 from schemas.observation_schemas import ObservationInndataSchema
 from schemas.weather_station_schemas import WeatherStationInndataSchema
 
@@ -38,7 +38,7 @@ def get_latest_weather_stations() -> pd.DataFrame:
     base_file = add_filename_to_path(
         settings.pre_inndata_dir, "weather_stations.parquet"
     )
-    if latest_file := get_latest_file_version(base_file):
+    if latest_file := get_latest_file_date(base_file):
         return read_parquet_file(latest_file)
     else:
         raise FileNotFoundError(f"File {latest_file!s} not found or not readable")

@@ -30,6 +30,43 @@ def get_latest_file_version(filepath: str) -> str | None:
     return sorted_files[-1]  # Return the last one
 
 
+def get_latest_file_date(filepath: str) -> str | None:
+    """Returns the latest version of a file based on the date in the filename.
+
+    This function searches for files in the same directory as the given filename that
+    start with the same base filename and contain a date denoted by '_p'
+    followed by YYYY-MM-DD. It then returns the file with the latest date.
+
+    Args:
+        filepath: The path to the file whose latest date version is to be found.
+
+    Returns:
+        The latest date version of the file, or None if no such files are found.
+    """
+    base_filename = _get_base_filename(filepath)
+    directory_files = _get_directory_files(filepath)
+    pattern = re.compile(
+        rf"^{re.escape(base_filename)}_p(\d{{4}}-\d{{2}}-\d{{2}})(?:_v\d+)?"
+    )
+
+    matching_files = []
+    suffix = _get_suffix(filepath)
+    for file in directory_files:
+        filename = get_filename(file)
+        if _get_suffix(file) == suffix:
+            match = pattern.match(filename)
+            if match:
+                date_str = match.group(1)
+                matching_files.append((file, date_str))
+
+    if not matching_files:
+        return None
+
+    # Sort by date string, and then by filename to handle multiple versions of same date
+    sorted_files = sorted(matching_files, key=lambda x: (x[1], x[0]))
+    return sorted_files[-1][0]
+
+
 def get_next_file_version(filepath: str) -> str:
     """Generate the next version filename based on the provided filename.
 
@@ -71,7 +108,9 @@ def _get_base_filename(filepath: str) -> str:
     base_filename = filename.rsplit(".", 1)[0] if "." in filename else filename
 
     # Remove the version number if the base_filename ends with one
-    return re.sub(r"_v\d+$", "", base_filename)
+    base_filename = re.sub(r"_v\d+$", "", base_filename)
+    # Remove the date if the base_filename ends with one
+    return re.sub(r"_p\d{4}-\d{2}-\d{2}$", "", base_filename)
 
 
 def _get_matching_files(filepath: str, base_filename: str) -> list[str]:
