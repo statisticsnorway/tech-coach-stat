@@ -206,6 +206,38 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
         log_validation_errors(observations, validation_errors)
 
 
+def split_observations(filename: str | Path) -> None:
+    """Read an observations file and split it into several files by year based on referenceTime.
+
+    Args:
+        filename: Path to the parquet file to be split.
+    """
+    df = read_parquet_file(filename)
+
+    if not pd.api.types.is_datetime64_any_dtype(df["referenceTime"]):
+        df["referenceTime"] = pd.to_datetime(df["referenceTime"])
+
+    df["year"] = df["referenceTime"].dt.year
+
+    for year, group in df.groupby("year"):
+        new_filename = f"split_observations_p{year}.parquet"
+
+        if isinstance(filename, Path):
+            target_path = filename.parent / new_filename
+        elif isinstance(filename, str) and filename.startswith("gs://"):
+            # For GCS, the directory is everything up to the last slash
+            directory = filename.rsplit("/", 1)[0] + "/"
+            target_path = f"{directory}{new_filename}"
+        else:
+            target_path = Path(filename).parent / new_filename
+
+        # Drop the temporary year column
+        output_df = group.drop(columns=["year"])
+
+        write_parquet_file(target_path, output_df)
+        logger.info("Saved split file: %s", target_path)
+
+
 def autocorrect_ws(
     weather_stations: pd.DataFrame, errors: SchemaErrors | SchemaError
 ) -> pd.DataFrame:
@@ -245,6 +277,7 @@ def run_all() -> None:
     )
     for file in new_observations_files:
         process_observation_file(file, target_dir)
+        split_observations(file)
 
 
 if __name__ == "__main__":
