@@ -1,10 +1,14 @@
 import pytest
 
 from config.config import settings
-from functions._versions_bucket import _get_directory_files
-from functions._versions_bucket import get_filename
+from functions.file_abstraction import get_dir_files
 from functions.ssbplatforms import is_dapla
 from functions.versions import get_latest_file_version
+
+
+def get_filename(filepath: str) -> str:
+    """Return the filename part of the filepath."""
+    return filepath.split("/")[-1]
 
 
 def _is_non_bucket() -> bool:
@@ -21,8 +25,8 @@ if is_dapla() and not _is_non_bucket():
     reason="Bucket tests only runs on Dapla",
 )
 def test_get_directory_files() -> None:
-    file = f"{PREFIX}/tc1/file_v1.txt"
-    result = _get_directory_files(file)
+    directory = f"{PREFIX}/tc1/"
+    result = get_dir_files(directory)
     assert len(result) == 3
 
 
