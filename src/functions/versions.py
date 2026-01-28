@@ -123,7 +123,7 @@ def get_next_file_version(filepath: Path | str) -> Path | str:
     )
 
     directory = _get_directory_path(filepath)
-    if isinstance(filepath, Path):
+    if isinstance(directory, Path):
         return directory / new_filename
     return f"{directory}{new_filename}"
 

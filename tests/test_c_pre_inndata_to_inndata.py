@@ -3,6 +3,7 @@ from pathlib import Path
 import pandas as pd
 from pytest_mock import MockerFixture
 
+from functions.versions import get_next_file_version
 from notebooks.c_pre_inndata_to_inndata import process_observation_file
 from notebooks.c_pre_inndata_to_inndata import process_weather_station_file
 

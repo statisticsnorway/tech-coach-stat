@@ -112,7 +112,7 @@ def log_validation_errors(df: pd.DataFrame, errors: SchemaErrors | SchemaError) 
     """Log validation errors from the schema validation process.
 
     Display the relevant rows from the provided DataFrame that failed validation,
-    along with associated failure details. Additionally the failed rows are saved
+    along with associated failure details. Additionally, the failed rows are saved
     to a parquet file.
 
     Args:
@@ -127,22 +127,31 @@ def log_validation_errors(df: pd.DataFrame, errors: SchemaErrors | SchemaError) 
     # Handle both forms defensively when extracting the failing indices.
     failed_rows: pd.DataFrame
     failure_cases = getattr(errors, "failure_cases", None)
+
+    # TODO: print if SchemaError and failure_cases is of type str.
+
+    if (
+        not isinstance(failure_cases, pd.DataFrame)
+        or "index" not in failure_cases.columns
+    ):
+        logger.warning(
+            "No index info available in failure cases. Can not store failed rows."
+        )
+        return None
+
+    failed_idx = failure_cases["index"].dropna().unique()
+
+    # If the DataFrame index matches, use it directly
+    # Otherwise, assume simple RangeIndex and convert to int indices
     try:
-        if isinstance(failure_cases, pd.DataFrame) and "index" in failure_cases.columns:
-            failed_indices = failure_cases["index"].unique()
-            failed_rows = df.loc[failed_indices]
-        elif isinstance(failure_cases, dict) and "index" in failure_cases:
-            failed_indices = pd.Index(failure_cases["index"]).unique()
-            failed_rows = df.loc[failed_indices]
-        else:
-            # Fallback: unable to determine exact failing rows, store full df
-            failed_rows = df.copy()
-    except Exception:
-        failed_rows = df.copy()
+        failed_rows = df.loc[failed_idx]
+    except KeyError:
+        failed_rows = df.iloc[failed_idx.astype(int)]
 
     failed_rows.to_parquet("validation_errors.parquet", index=False)
     logger.info("Failed Rows:")
     logger.info("\n%s", failed_rows.to_string())
+    return None
 
 
 def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -> None:
@@ -221,7 +230,7 @@ def split_observations(filename: str | Path) -> None:
 
     for year, group in df.groupby("year"):
         new_filename = f"split_observations_p{year}.parquet"
-
+        target_path: Path | str
         if isinstance(filename, Path):
             target_path = filename.parent / new_filename
         elif isinstance(filename, str) and filename.startswith("gs://"):
