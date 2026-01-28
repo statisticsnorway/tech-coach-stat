@@ -229,7 +229,7 @@ def split_observations(filename: str | Path) -> None:
     df["year"] = df["referenceTime"].dt.year
 
     for year, group in df.groupby("year"):
-        new_filename = f"split_observations_p{year}.parquet"
+        new_filename = f"observations_p{year}_v1.parquet"
         target_path: Path | str
         if isinstance(filename, Path):
             target_path = filename.parent / new_filename
