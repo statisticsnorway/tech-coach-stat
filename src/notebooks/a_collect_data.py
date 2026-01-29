@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+import gcsfs
 import requests
-from dapla import FileClient
 from dotenv import load_dotenv
 from fagfunksjoner.dapla.gsm import get_secret_version
 from fagfunksjoner.log.statlogger import StatLogger
@@ -225,7 +225,7 @@ def get_latest_observation_date(directory: Path | str) -> date | None:
         return find_latest_date_in_files(directory.glob(OBSERVATION_FILE_PATTERN))
 
     if isinstance(directory, str):
-        fs = FileClient.get_gcs_file_system()
+        fs = gcsfs.GCSFileSystem()
         gcs_files = cast(list[str], fs.glob(f"{directory}{OBSERVATION_FILE_PATTERN}"))
         return find_latest_date_in_files(gcs_files)
 

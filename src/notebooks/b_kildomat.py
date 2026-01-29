@@ -18,9 +18,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
-import dapla as dp
+import gcsfs
 import pandas as pd
-from dapla import FileClient
 
 
 def main(source_file: Path | str, target_dir: Path | None = None) -> None:
@@ -167,7 +166,8 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
         with filepath.open(encoding="utf-8") as file:
             return cast(list[dict[str, Any]], json.load(file))
     elif isinstance(filepath, str):
-        with FileClient.gcs_open(filepath) as file:
+        fs = gcsfs.GCSFileSystem()
+        with fs.open(filepath) as file:
             return cast(list[dict[str, Any]], json.load(file))
 
 
@@ -184,12 +184,19 @@ def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
     _validate_filepath(filepath)
-    if isinstance(filepath, Path):
-        df.to_parquet(filepath)
-    elif isinstance(filepath, str):
-        dp.write_pandas(df=df, gcs_path=filepath)
+    if isinstance(filepath, str):
+        filepath = _ensure_gcs_uri_prefix(filepath)
+    df.to_parquet(filepath, index=False)
 
 
 def _validate_filepath(filepath: Path | str) -> None:
     if not isinstance(filepath, Path | str):
         raise TypeError("Expected filepath to be of type Path or str.")
+
+
+def _ensure_gcs_uri_prefix(gcs_path: str) -> str:
+    """Ensure that a GCS uri has the 'gs://' prefix."""
+    GS_URI_PREFIX = "gs://"
+    if not gcs_path.startswith(GS_URI_PREFIX):
+        gcs_path = f"{GS_URI_PREFIX}{gcs_path}"
+    return gcs_path

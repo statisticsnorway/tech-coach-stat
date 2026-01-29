@@ -7,7 +7,6 @@ license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11,<4.0"
 dependencies = [
-    "dapla-toolbelt >=3.0.0",
     "dynaconf >=3.2",
     "python-dotenv >=1.0.1",
     "ssb-klass-python >=0.0.11",
@@ -16,7 +15,6 @@ dependencies = [
     "gcsfs >=2024.12.0",
     "ssb-fagfunksjoner >=1.0.8",
     "ssb-eimerdb>=0.2.4",
-    "dapla-auth-client>=1.1.0",
     "pandas (>=2.3.3,<4.0.0)",
     "google-auth>=2.47.0",
     "google-api-core>=2.29.0",
