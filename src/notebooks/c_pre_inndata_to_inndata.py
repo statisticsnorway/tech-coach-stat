@@ -286,7 +286,8 @@ def run_all() -> None:
     )
     for file in new_observations_files:
         process_observation_file(file, target_dir)
-        split_observations(file)
+        # Use the function below to split observation files by year, if needed.
+        # split_observations(file)
 
 
 if __name__ == "__main__":
