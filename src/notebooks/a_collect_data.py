@@ -14,8 +14,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
+import gcsfs
 import requests
-from dapla import FileClient
 from dotenv import load_dotenv
 from fagfunksjoner.dapla.gsm import get_secret_version
 from fagfunksjoner.log.statlogger import StatLogger
@@ -27,8 +27,7 @@ from functions.file_abstraction import add_filename_to_path
 from functions.file_abstraction import create_dir_if_not_exist
 from functions.file_abstraction import read_json_file
 from functions.file_abstraction import write_json_file
-from functions.versions import get_latest_file_version
-from functions.versions import get_next_file_version
+from functions.versions import get_latest_file_date
 
 logger = logging.getLogger(__name__)
 
@@ -51,17 +50,15 @@ def get_weather_stations() -> list[dict[str, Any]]:
         settings.kildedata_root_dir,
         f"{settings.weather_stations_file_prefix}.json",
     )
-    latest_file = get_latest_file_version(base_file)
+    latest_file = get_latest_file_date(base_file)
     latest_data = read_json_file(latest_file) if latest_file is not None else None
 
     if (not latest_data) or (data != latest_data):
-        if (latest_file_version := get_latest_file_version(base_file)) is not None:
-            next_file = get_next_file_version(latest_file_version)
-        else:
-            next_file = add_filename_to_path(  # No previous version, use _v1.json
-                settings.kildedata_root_dir,
-                f"{settings.weather_stations_file_prefix}_v1.json",
-            )
+        today_str = date.today().isoformat()
+        next_file = add_filename_to_path(
+            settings.kildedata_root_dir,
+            f"{settings.weather_stations_file_prefix}_p{today_str}_v1.json",
+        )
 
         write_json_file(next_file, data)
         logger.info("Storing to %s", next_file)
@@ -110,7 +107,7 @@ def get_observations(source_ids_: list[str]) -> list[dict[str, Any]]:
     data = fetch_data(endpoint, parameters)
     logger.info("Data retrieved from frost.met.no!")
 
-    filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}.json"
+    filename = f"{settings.observations_file_prefix}_p{extract_timespan(data)}_v1.json"
     observations_file = add_filename_to_path(settings.kildedata_root_dir, filename)
     logger.info("Storing to %s", observations_file)
 
@@ -228,7 +225,7 @@ def get_latest_observation_date(directory: Path | str) -> date | None:
         return find_latest_date_in_files(directory.glob(OBSERVATION_FILE_PATTERN))
 
     if isinstance(directory, str):
-        fs = FileClient.get_gcs_file_system()
+        fs = gcsfs.GCSFileSystem()
         gcs_files = cast(list[str], fs.glob(f"{directory}{OBSERVATION_FILE_PATTERN}"))
         return find_latest_date_in_files(gcs_files)
 

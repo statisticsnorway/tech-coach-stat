@@ -19,7 +19,7 @@ from functions.file_abstraction import directory_diff
 from functions.file_abstraction import read_parquet_file
 from functions.file_abstraction import replace_directory
 from functions.file_abstraction import write_parquet_file
-from functions.versions import get_latest_file_version
+from functions.versions import get_latest_file_date
 from schemas.observation_schemas import ObservationInndataSchema
 from schemas.weather_station_schemas import WeatherStationInndataSchema
 
@@ -38,7 +38,7 @@ def get_latest_weather_stations() -> pd.DataFrame:
     base_file = add_filename_to_path(
         settings.pre_inndata_dir, "weather_stations.parquet"
     )
-    if latest_file := get_latest_file_version(base_file):
+    if latest_file := get_latest_file_date(base_file):
         return read_parquet_file(latest_file)
     else:
         raise FileNotFoundError(f"File {latest_file!s} not found or not readable")
@@ -64,6 +64,12 @@ def transform_ws_to_inndata(df: pd.DataFrame) -> DataFrame[WeatherStationInndata
     """
     df["komm_nr"] = df["municipalityId"].astype(str).str.zfill(4).astype("string")
     df["fylke_nr"] = df["countyId"].astype(str).str.zfill(2).astype("string")
+
+    # Ensure datetime columns have timezone-aware UTC dtype as required by schema
+    if "validFrom" in df.columns:
+        df["validFrom"] = pd.to_datetime(df["validFrom"], utc=True, errors="coerce")
+    if "validTo" in df.columns:
+        df["validTo"] = pd.to_datetime(df["validTo"], utc=True, errors="coerce")
 
     # The pipe is used to cast the data type so that mypy understands the type
     return df.pipe(DataFrame[WeatherStationInndataSchema])
@@ -106,7 +112,7 @@ def log_validation_errors(df: pd.DataFrame, errors: SchemaErrors | SchemaError) 
     """Log validation errors from the schema validation process.
 
     Display the relevant rows from the provided DataFrame that failed validation,
-    along with associated failure details. Additionally the failed rows are saved
+    along with associated failure details. Additionally, the failed rows are saved
     to a parquet file.
 
     Args:
@@ -116,12 +122,36 @@ def log_validation_errors(df: pd.DataFrame, errors: SchemaErrors | SchemaError) 
     """
     logger.warning("Validation errors occurred")
     logger.info("Errors: %s", errors)
-    failure_cases = errors.failure_cases
-    failed_indices = failure_cases["index"].unique()
-    failed_rows = df.loc[failed_indices]
+
+    # Pandera raises either SchemaErrors (aggregate) or SchemaError (single).
+    # Handle both forms defensively when extracting the failing indices.
+    failed_rows: pd.DataFrame
+    failure_cases = getattr(errors, "failure_cases", None)
+
+    # TODO: print if SchemaError and failure_cases is of type str.
+
+    if (
+        not isinstance(failure_cases, pd.DataFrame)
+        or "index" not in failure_cases.columns
+    ):
+        logger.warning(
+            "No index info available in failure cases. Can not store failed rows."
+        )
+        return None
+
+    failed_idx = failure_cases["index"].dropna().unique()
+
+    # If the DataFrame index matches, use it directly
+    # Otherwise, assume simple RangeIndex and convert to int indices
+    try:
+        failed_rows = df.loc[failed_idx]
+    except KeyError:
+        failed_rows = df.iloc[failed_idx.astype(int)]
+
     failed_rows.to_parquet("validation_errors.parquet", index=False)
     logger.info("Failed Rows:")
     logger.info("\n%s", failed_rows.to_string())
+    return None
 
 
 def process_weather_station_file(filepath: Path | str, target_dir: Path | str) -> None:
@@ -185,6 +215,38 @@ def process_observation_file(filepath: Path | str, target_dir: Path | str) -> No
         log_validation_errors(observations, validation_errors)
 
 
+def split_observations(filename: str | Path) -> None:
+    """Read an observations file and split it into several files by year based on referenceTime.
+
+    Args:
+        filename: Path to the parquet file to be split.
+    """
+    df = read_parquet_file(filename)
+
+    if not pd.api.types.is_datetime64_any_dtype(df["referenceTime"]):
+        df["referenceTime"] = pd.to_datetime(df["referenceTime"])
+
+    df["year"] = df["referenceTime"].dt.year
+
+    for year, group in df.groupby("year"):
+        new_filename = f"observations_p{year}_v1.parquet"
+        target_path: Path | str
+        if isinstance(filename, Path):
+            target_path = filename.parent / new_filename
+        elif isinstance(filename, str) and filename.startswith("gs://"):
+            # For GCS, the directory is everything up to the last slash
+            directory = filename.rsplit("/", 1)[0] + "/"
+            target_path = f"{directory}{new_filename}"
+        else:
+            target_path = Path(filename).parent / new_filename
+
+        # Drop the temporary year column
+        output_df = group.drop(columns=["year"])
+
+        write_parquet_file(target_path, output_df)
+        logger.info("Saved split file: %s", target_path)
+
+
 def autocorrect_ws(
     weather_stations: pd.DataFrame, errors: SchemaErrors | SchemaError
 ) -> pd.DataFrame:
@@ -224,6 +286,8 @@ def run_all() -> None:
     )
     for file in new_observations_files:
         process_observation_file(file, target_dir)
+        # Use the function below to split observation files by year, if needed.
+        # split_observations(file)
 
 
 if __name__ == "__main__":

@@ -9,10 +9,8 @@ from pathlib import Path
 from typing import Any
 from typing import cast
 
-import dapla as dp
 import gcsfs
 import pandas as pd
-from dapla import FileClient
 
 GS_URI_PREFIX = "gs://"
 
@@ -34,7 +32,8 @@ def write_json_file(filepath: Path | str, data: list[dict[str, Any]]) -> None:
         with filepath.open(mode="w", encoding="utf-8") as file:
             json.dump(data, file, indent=4)
     elif isinstance(filepath, str):
-        with FileClient.gcs_open(filepath, mode="w") as file:
+        fs = gcsfs.GCSFileSystem()
+        with fs.open(filepath, mode="w") as file:
             json.dump(data, file, indent=4)
 
 
@@ -57,7 +56,8 @@ def read_json_file(filepath: Path | str) -> list[dict[str, Any]]:
         with filepath.open(encoding="utf-8") as file:
             return cast(list[dict[str, Any]], json.load(file))
     elif isinstance(filepath, str):
-        with FileClient.gcs_open(filepath) as file:
+        fs = gcsfs.GCSFileSystem()
+        with fs.open(filepath) as file:
             return cast(list[dict[str, Any]], json.load(file))
 
 
@@ -74,10 +74,9 @@ def write_parquet_file(filepath: Path | str, df: pd.DataFrame) -> None:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
     _validate_filepath(filepath)
-    if isinstance(filepath, Path):
-        df.to_parquet(filepath, index=False)
-    elif isinstance(filepath, str):
-        dp.write_pandas(df=df, gcs_path=filepath, index=False)
+    if isinstance(filepath, str):
+        filepath = _ensure_gcs_uri_prefix(filepath)
+    df.to_parquet(filepath, index=False)
 
 
 def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
@@ -95,13 +94,9 @@ def read_parquet_file(filepath: Path | str) -> pd.DataFrame:
         TypeError: If the `filepath` is not of type `Path` or `str`.
     """
     _validate_filepath(filepath)
-    if isinstance(filepath, Path):
-        return pd.read_parquet(filepath)
-    elif isinstance(filepath, str):
-        result = dp.read_pandas(gcs_path=filepath)
-        if not isinstance(result, pd.DataFrame):
-            raise TypeError("Expected a pandas DataFrame but got a different type")
-        return result
+    if isinstance(filepath, str):
+        filepath = _ensure_gcs_uri_prefix(filepath)
+    return pd.read_parquet(filepath)
 
 
 def add_filename_to_path(filepath: Path | str, filename: str) -> Path | str:
@@ -197,8 +192,13 @@ def directory_diff(
         return sorted(new_files_with_path)
 
     elif isinstance(source_dir, str) and isinstance(target_dir, str):
+        # For GCS buckets: a non-existent target directory (prefix) should be treated as empty
+        # so that new files in source can be detected and processed.
         source_file_strings = get_dir_files_bucket(source_dir, prefix)
-        target_file_strings = get_dir_files_bucket(target_dir, prefix)
+        try:
+            target_file_strings = get_dir_files_bucket(target_dir, prefix)
+        except ValueError:
+            target_file_strings = []
         # Extract just the filenames from both lists of strings
         source_filenames = {s.rsplit("/", 1)[-1] for s in source_file_strings}
         target_filenames = {t.rsplit("/", 1)[-1] for t in target_file_strings}
