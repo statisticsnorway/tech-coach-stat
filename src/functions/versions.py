@@ -133,14 +133,17 @@ def get_next_file_version(filepath: Path | str) -> Path | str:
 
 def _get_filename(path: Path | str) -> str:
     """Return the filename part of the path."""
-    return path.name if isinstance(path, Path) else path.split("/")[-1]
+    if isinstance(path, Path):
+        return path.name
+    return path.rstrip("/").split("/")[-1] if path else ""
 
 
 def _get_suffix(path: Path | str) -> str:
     """Return the suffix of the path, including the leading dot."""
     if isinstance(path, Path):
         return path.suffix
-    return "." + path.rsplit(".", 1)[-1] if "." in path else ""
+    path_to_check = path.rstrip("/")
+    return "." + path_to_check.rsplit(".", 1)[-1] if "." in path_to_check else ""
 
 
 def _get_base_filename(path: Path | str, strip_date: bool = False) -> str:
@@ -157,11 +160,24 @@ def _get_base_filename(path: Path | str, strip_date: bool = False) -> str:
 def _get_directory_path(path: Path | str) -> Path | str:
     """Return the directory part of the path. Ends with / for strings (GCS)."""
     if isinstance(path, Path):
-        return path.parent
-    if "/" not in path:
+        return path if path.is_dir() else path.parent
+
+    if path.endswith("/"):
+        return path
+
+    # Use rsplit to determine the directory part robustly.
+    path_to_split = path.rstrip("/")
+    if not path_to_split:
         return "./"
-    directory = path.rsplit("/", 1)[0]
-    return directory if directory.endswith("/") else f"{directory}/"
+
+    parts = path_to_split.rsplit("/", 1)
+    if len(parts) == 1:
+        return "./"
+
+    if directory := parts[0]:
+        return directory if directory.endswith("/") else f"{directory}/"
+    else:
+        return "/"
 
 
 def _validate_filepath(filepath: Path | str) -> None:

@@ -74,7 +74,7 @@ def process_weather_stations(source_file: Path | str, target_dir: Path | None) -
     df["validFrom"] = pd.to_datetime(df["validFrom"])
     if "validTo" in df.columns:
         df["validTo"] = pd.to_datetime(df["validTo"])
-    object_cols = df.select_dtypes(include="object", exclude="string").columns
+    object_cols = df.select_dtypes(include=["object"], exclude=["string"]).columns
     df = df.astype(dict.fromkeys(object_cols, "string"))
 
     target_filepath = get_target_filepath(source_file, target_dir)
@@ -111,7 +111,7 @@ def process_observations(source_file: Path | str, target_dir: Path | None) -> No
 
     # Convert datatypes
     df["referenceTime"] = pd.to_datetime(df["referenceTime"], utc=True)
-    object_cols = df.select_dtypes(include="object", exclude="string").columns
+    object_cols = df.select_dtypes(include=["object"], exclude=["string"]).columns
     df = df.astype(dict.fromkeys(object_cols, "string"))
 
     target_filepath = get_target_filepath(source_file, target_dir)
@@ -196,7 +196,7 @@ def _validate_filepath(filepath: Path | str) -> None:
 
 def _ensure_gcs_uri_prefix(gcs_path: str) -> str:
     """Ensure that a GCS uri has the 'gs://' prefix."""
-    GS_URI_PREFIX = "gs://"
-    if not gcs_path.startswith(GS_URI_PREFIX):
-        gcs_path = f"{GS_URI_PREFIX}{gcs_path}"
+    gs_uri_prefix = "gs://"
+    if not gcs_path.startswith(gs_uri_prefix):
+        gcs_path = f"{gs_uri_prefix}{gcs_path}"
     return gcs_path

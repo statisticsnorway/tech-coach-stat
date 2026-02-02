@@ -137,3 +137,26 @@ def test_get_next_file_version_no_version():
 
         with pytest.raises(AssertionError):
             get_next_file_version(file_path)
+
+
+# --- get_latest_file_date tests ---
+
+
+def test_string_trailing_slashes():
+    """Test that strings with trailing slashes are treated as directories."""
+    from functions.versions import _get_directory_path
+
+    # In contrast to Path.parent, strings ending with / are returned as-is
+    assert _get_directory_path("dir/") == "dir/"
+    assert _get_directory_path("dir/subdir/") == "dir/subdir/"
+    assert _get_directory_path("gs://bucket/dir/") == "gs://bucket/dir/"
+    assert _get_directory_path("/") == "/"
+    assert _get_directory_path("gs://bucket/") == "gs://bucket/"
+
+
+def test_get_directory_path_consistency():
+    """Test directory path for strings without trailing slashes."""
+    from functions.versions import _get_directory_path
+
+    assert _get_directory_path("filename") == "./"
+    assert _get_directory_path("dir/filename") == "dir/"
