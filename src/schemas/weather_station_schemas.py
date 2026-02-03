@@ -30,7 +30,7 @@ class WeatherStationInndataSchema(DataFrameModel):
         dtype_kwargs={"tz": "UTC", "unit": "us"}
     )
     validTo: Series[pd.DatetimeTZDtype] | None = Field(
-        nullable=True, dtype_kwargs={"tz": "UTC", "unit": "us"}
+        nullable=True, dtype_kwargs={"tz": "UTC"}
     )
 
 

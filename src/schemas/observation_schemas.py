@@ -10,7 +10,7 @@ class ObservationInndataSchema(DataFrameModel):
     sourceId: Series[str]
     elementId: Series[str]
     observationTime: Series[pd.DatetimeTZDtype] = Field(
-        dtype_kwargs={"tz": "UTC", "unit": "us"}
+        dtype_kwargs={"tz": "UTC"}
     )
     value: Series[float]
     unit: Series[str]
