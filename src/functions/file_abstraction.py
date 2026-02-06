@@ -230,14 +230,11 @@ def get_dir_files_bucket(directory: str, prefix: str | None = None) -> list[str]
 
     Returns:
         A list of file names within the specified directory.
-
-    Raises:
-        ValueError: If the provided `directory` is not a gcs directory or does not exist.
     """
     _check_if_valid_gcs_directory(directory)
     fs = gcsfs.GCSFileSystem()
     if not fs.exists(directory):
-        raise ValueError(f"{directory} does not exist.")
+        return []
 
     all_files = fs.ls(directory)
     all_files_with_gcs_uri = [_ensure_gcs_uri_prefix(uri) for uri in all_files]

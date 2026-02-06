@@ -124,20 +124,20 @@ class TestGetDirFilesBucket:
             == f"{directory} is not a gcs directory. It must start with `gs://` and end with `/`"
         )
 
-    # Raises ValueError when directory doesn't exist in GCS
-    def test_raises_value_error_for_nonexistent_directory(
-        self, mocker: MockerFixture
-    ) -> None:
+    # Return empty list when directory doesn't exist in GCS
+    def test_empty_list_for_nonexistent_directory(self, mocker: MockerFixture) -> None:
         # Arrange
         mock_fs = mocker.patch("gcsfs.GCSFileSystem")
         mock_fs.return_value.exists.return_value = False
+        mock_fs.return_value.ls.return_value = []
 
         directory = "gs://bucket/nonexistent_dir/"
 
-        # Act & Assert
-        with pytest.raises(ValueError, match=f"{directory} does not exist."):
-            get_dir_files_bucket(directory)
+        # Act
+        result = get_dir_files_bucket(directory)
 
+        # Assert
+        assert result == []
         mock_fs.return_value.exists.assert_called_once_with(directory)
 
 
