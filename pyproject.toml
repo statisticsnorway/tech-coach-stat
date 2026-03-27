@@ -5,7 +5,7 @@ description = "Example of how to produce statistics for meteorological data."
 authors = [{name = "Arne Sørli", email = "81353974+arneso-ssb@users.noreply.github.com"}]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.11,<4.0"
+requires-python = ">=3.12,<4.0"
 dependencies = [
     "dynaconf >=3.2",
     "python-dotenv >=1.0.1",
@@ -19,6 +19,7 @@ dependencies = [
     "google-auth>=2.47.0",
     "google-api-core>=2.29.0",
     "requests>=2.32.5",
+    "ssb-parquedit>=0.0.6",
 ]
 
 [tool.poetry]
@@ -48,6 +49,9 @@ dapla-toolbelt-metadata = "^0.13.0"
 [build-system]
 requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+target-version = ["py313"]
 
 [tool.jupytext]
 formats = "ipynb,auto:percent"
