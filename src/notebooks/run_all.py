@@ -23,7 +23,7 @@ import logging
 import a_collect_data
 import b_kildomat_local
 import c_pre_inndata_to_inndata
-import d_prepare_edit
+import e_prepare_edit
 from fagfunksjoner.log.statlogger import StatLogger
 
 from config.config import settings
@@ -49,7 +49,7 @@ def main() -> None:
 
     # Step C: Main production part, run from the standard project
     c_pre_inndata_to_inndata.run_all()
-    d_prepare_edit.run_all()
+    e_prepare_edit.run_all()
 
 
 # %%

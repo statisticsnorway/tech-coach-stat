@@ -49,8 +49,10 @@ def transform_ws_to_inndata(df: pd.DataFrame) -> DataFrame[WeatherStationInndata
     """Transforms a weather stations dataframe to inndata and validates the data.
 
     Convert municipalityId and countyId to column names defined by Standardutvalget.
-    Also convert type to from int to str with leading zeros, as required by Klass.
+    Also convert type from int to str with leading zeros, as required by Klass.
     See https://ssbno.sharepoint.com/sites/Avdelingerutvalgograd/SitePages/Vedtak-fra-Standardutvalget.aspx#standardnavn-for-enhetstypeidentifikatorer
+
+    Keep municipality, municipalityId, county, and countyId if needed when editing.
 
     The transformed dataframe is validated according to the WeatherStationInndataSchema.
 
