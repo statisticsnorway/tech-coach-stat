@@ -1,5 +1,32 @@
+"""Pytest configuration and shared fixtures for the test suite.
+
+Registers the ``--integration`` command-line flag and automatically skips any
+test marked with ``@pytest.mark.integration`` unless that flag is supplied.
+Also provides shared fixtures used across multiple test modules.
+"""
+
 import pandas as pd
 import pytest
+
+
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--integration",
+        action="store_true",
+        default=False,
+        help="Run integration tests that make real network requests.",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    if config.getoption("--integration"):
+        return
+    skip = pytest.mark.skip(reason="Pass --integration to run integration tests.")
+    for item in items:
+        if item.get_closest_marker("integration"):
+            item.add_marker(skip)
 
 
 @pytest.fixture
