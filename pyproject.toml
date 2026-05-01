@@ -51,6 +51,9 @@ dapla-toolbelt-metadata = "^0.13.0"
 requires = ["poetry-core>=2.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.black]
+target-version = ["py312"]
+
 [tool.jupytext]
 formats = "ipynb,auto:percent"
 notebook_metadata_filter = "jupytext.text_representation,-jupytext.text_representation.jupytext_version,-widgets,-varInspector"
