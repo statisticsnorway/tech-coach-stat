@@ -10,6 +10,7 @@ API reference:
 """
 
 from dataclasses import dataclass
+from functools import cache
 
 import httpx
 
@@ -41,6 +42,7 @@ class AdministrativeUnits:
     fylkesnummer: str
 
 
+@cache
 def administrative_units_from_position(lat: float, lon: float) -> AdministrativeUnits:
     """Return the Norwegian municipality and county codes for a WGS84 position.
 
