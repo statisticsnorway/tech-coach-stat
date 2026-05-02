@@ -15,6 +15,7 @@ Run all tests including integration:
     pytest tests/test_kartverket.py -v --integration
 """
 
+from collections.abc import Generator
 from dataclasses import FrozenInstanceError
 
 import httpx
@@ -29,6 +30,12 @@ _KOMMUNEINFO_URL = "https://api.kartverket.no/kommuneinfo/v1/punkt"
 
 class TestAdministrativeUnitsFromPositionUnit:
     """Fast, offline tests using mocked HTTP responses."""
+
+    @pytest.fixture(autouse=True)
+    def clear_cache(self) -> Generator[None, None, None]:
+        administrative_units_from_position.cache_clear()  # Setup
+        yield
+        administrative_units_from_position.cache_clear()  # Teardown
 
     @respx.mock
     def test_success_returns_correct_codes(self) -> None:

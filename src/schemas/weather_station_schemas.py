@@ -25,7 +25,7 @@ class WeatherStationInndataSchema(DataFrameModel):
     fylke_nr: Series[str] = Field(nullable=True)
     countryCode: Series[str] = Field(str_length={"min_value": 2, "max_value": 2})
     masl: Series[int] = Field(gt=-500, le=9999, nullable=True)
-    coordinates: Series[str] = pa.Field(alias="geometry_coordinates", nullable=True)
+    coordinates: Series[str] = Field(alias="geometry_coordinates", nullable=True)
     validFrom: Series[pd.DatetimeTZDtype] = Field(
         dtype_kwargs={"tz": "UTC", "unit": "us"}, coerce=True
     )
