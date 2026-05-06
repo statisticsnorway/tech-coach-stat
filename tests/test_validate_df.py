@@ -26,6 +26,12 @@ class SampleSchema(DataFrameModel):
         return df["value"] == df["price"] * df["quantity"]
 
 
+class MissingColumnSchema(DataFrameModel):
+    """Schema for testing missing columns."""
+
+    required_col: Series[int]
+
+
 @pytest.fixture
 def valid_df() -> pd.DataFrame:
     return pd.DataFrame(
@@ -223,9 +229,6 @@ def test_single_valid_row(valid_df):
 
 
 def test_missing_required_column_returns_non_row_errors():
-    class MissingColumnSchema(DataFrameModel):
-        required_col: Series[int]
-
     df = pd.DataFrame({"other_col": [1, 2, 3]})
     result = validate_df(df, MissingColumnSchema)
 
@@ -233,3 +236,119 @@ def test_missing_required_column_returns_non_row_errors():
     assert result.valid_rows.empty
     assert result.non_valid_rows.empty
     assert not result.non_row_errors.empty
+
+
+# --- Tests for lazy=False ---
+
+
+def test_valid_df_has_no_errors_lazy_false(valid_df):
+    result = validate_df(valid_df, SampleSchema, lazy=False)
+    assert result.has_errors is False
+
+
+def test_valid_df_all_rows_are_valid_lazy_false(valid_df):
+    result = validate_df(valid_df, SampleSchema, lazy=False)
+    assert len(result.valid_rows) == len(valid_df)
+
+
+def test_valid_df_non_valid_rows_is_empty_lazy_false(valid_df):
+    result = validate_df(valid_df, SampleSchema, lazy=False)
+    assert result.non_valid_rows.empty
+
+
+def test_valid_df_non_row_errors_is_empty_lazy_false(valid_df):
+    result = validate_df(valid_df, SampleSchema, lazy=False)
+    assert result.non_row_errors.empty
+
+
+def test_invalid_id_prefix_detected_lazy_false():
+    df = pd.DataFrame(
+        {
+            "id": ["SN001", "XX002"],
+            "price": [10, 20],
+            "quantity": [3, 5],
+            "value": [30, 100],
+        }
+    )
+    result = validate_df(df, SampleSchema, lazy=False)
+    assert result.has_errors is True
+
+
+def test_invalid_id_prefix_row_is_non_valid_lazy_false():
+    df = pd.DataFrame(
+        {
+            "id": ["SN001", "XX002"],
+            "price": [10, 20],
+            "quantity": [3, 5],
+            "value": [30, 100],
+        }
+    )
+    result = validate_df(df, SampleSchema, lazy=False)
+    assert len(result.non_valid_rows) == 1
+
+
+def test_null_id_detected_lazy_false():
+    df = pd.DataFrame(
+        {
+            "id": ["SN001", None],
+            "price": [10, 20],
+            "quantity": [3, 5],
+            "value": [30, 100],
+        }
+    )
+    result = validate_df(df, SampleSchema, lazy=False)
+    assert result.has_errors is True
+
+
+def test_price_not_greater_than_one_detected_lazy_false():
+    df = pd.DataFrame(
+        {
+            "id": ["SN001", "SN002"],
+            "price": [10, 1],
+            "quantity": [3, 5],
+            "value": [30, 5],
+        }
+    )
+    result = validate_df(df, SampleSchema, lazy=False)
+    assert result.has_errors is True
+
+
+def test_price_not_greater_than_one_row_is_non_valid_lazy_false():
+    df = pd.DataFrame(
+        {
+            "id": ["SN001", "SN002"],
+            "price": [10, 1],
+            "quantity": [3, 5],
+            "value": [30, 5],
+        }
+    )
+    result = validate_df(df, SampleSchema, lazy=False)
+    assert len(result.non_valid_rows) == 1
+
+
+def test_missing_required_column_returns_non_row_errors_lazy_false():
+    """Missing column raises a SchemaError where failure_cases is a plain string."""
+    df = pd.DataFrame({"other_col": [1, 2, 3]})
+    result = validate_df(df, MissingColumnSchema, lazy=False)
+
+    assert isinstance(result.valid_rows, pd.DataFrame)
+    assert isinstance(result.non_valid_rows, pd.DataFrame)
+    assert isinstance(result.non_row_errors, pd.DataFrame)
+    assert result.has_errors is True
+    assert result.valid_rows.empty
+    assert result.non_valid_rows.empty
+
+
+def test_stops_at_first_error_lazy_false():
+    """With lazy=False, validation stops at the first check that fails."""
+    df = pd.DataFrame(
+        {
+            "id": ["XX001", "XX002", "XX003"],
+            "price": [10, 20, 5],
+            "quantity": [3, 5, 10],
+            "value": [30, 100, 50],
+        }
+    )
+    result = validate_df(df, SampleSchema, lazy=False)
+    assert result.has_errors is True
+    assert len(result.non_valid_rows) == len(df)

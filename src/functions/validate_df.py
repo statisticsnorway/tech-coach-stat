@@ -18,7 +18,9 @@ class ValidationResult(NamedTuple):
     has_errors: bool
 
 
-def validate_df(df: pd.DataFrame, schema: DataFrameModel) -> ValidationResult:
+def validate_df(
+    df: pd.DataFrame, schema: type[DataFrameModel], lazy: bool = True
+) -> ValidationResult:
     """Validates a given DataFrame against a specified schema.
 
     This function takes a pandas DataFrame and validates it using a
@@ -32,6 +34,9 @@ def validate_df(df: pd.DataFrame, schema: DataFrameModel) -> ValidationResult:
         df: The DataFrame to be validated.
         schema: The schema used for validation, which
             defines the rules the DataFrame must conform to.
+        lazy: If True, all errors will be collected and returned in one go.
+            If False, validation will stop at the first error encountered.
+            Defaults to True.
 
     Returns:
         ValidationResult: An object representing the outcome of the validation
@@ -39,7 +44,7 @@ def validate_df(df: pd.DataFrame, schema: DataFrameModel) -> ValidationResult:
             successful, as well as any errors if applicable.
     """
     try:
-        validated = schema.validate(df, lazy=True)
+        validated = schema.validate(df, lazy=lazy)
         return ValidationResult(validated, pd.DataFrame(), pd.DataFrame(), False)
     except SchemaErrors as exc:
         return _validation_result_from_schema_errors(exc)
@@ -63,6 +68,8 @@ def _validation_result_from_schema_errors(exc: SchemaErrors) -> ValidationResult
 
 def _validation_result_from_single_error(exc: SchemaError) -> ValidationResult:
     failure_cases = exc.failure_cases
+    if not isinstance(failure_cases, pd.DataFrame):
+        return ValidationResult(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), True)
     if "index" not in failure_cases.columns:
         return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
 
