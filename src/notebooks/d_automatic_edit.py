@@ -168,7 +168,5 @@ def run_all() -> None:
 
 
 if __name__ == "__main__":
-    root_logger = StatLogger()
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    root_logger = StatLogger(log_level=logging.INFO)
     run_all()

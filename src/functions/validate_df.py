@@ -14,7 +14,7 @@ class ValidationResult(NamedTuple):
 
     valid_rows: pd.DataFrame
     non_valid_rows: pd.DataFrame
-    non_row_errors: pd.DataFrame
+    failure_cases: pd.DataFrame
     has_errors: bool
 
 
@@ -54,6 +54,9 @@ def validate_df(
 
 def _validation_result_from_schema_errors(exc: SchemaErrors) -> ValidationResult:
     failure_cases = exc.failure_cases
+    if not isinstance(failure_cases, pd.DataFrame):
+        error_messages = pd.DataFrame(exc.args, columns=["error_message"])
+        return ValidationResult(pd.DataFrame(), pd.DataFrame(), error_messages, True)
     if "index" not in failure_cases.columns:
         return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
 
@@ -61,23 +64,25 @@ def _validation_result_from_schema_errors(exc: SchemaErrors) -> ValidationResult
     failed_rows = exc.data.loc[row_level_errors["index"].unique()]
     schema_level_errors = failure_cases[failure_cases["index"].isna()]
     if not schema_level_errors.empty:
-        return ValidationResult(pd.DataFrame(), failed_rows, schema_level_errors, True)
+        # If schema-errors like missing columns, no rows are valid
+        return ValidationResult(pd.DataFrame(), failed_rows, failure_cases, True)
     valid_df = exc.data.drop(index=failed_rows.index)
-    return ValidationResult(valid_df, failed_rows, pd.DataFrame(), True)
+    return ValidationResult(valid_df, failed_rows, failure_cases, True)
 
 
 def _validation_result_from_single_error(exc: SchemaError) -> ValidationResult:
     failure_cases = exc.failure_cases
     if not isinstance(failure_cases, pd.DataFrame):
-        return ValidationResult(pd.DataFrame(), pd.DataFrame(), pd.DataFrame(), True)
+        error_messages = pd.DataFrame(exc.args, columns=["error_message"])
+        return ValidationResult(pd.DataFrame(), pd.DataFrame(), error_messages, True)
     if "index" not in failure_cases.columns:
         return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
 
     row_level_errors = failure_cases[failure_cases["index"].notna()]
     failed_rows = exc.data.loc[row_level_errors["index"].unique()]
-    if failed_rows.empty:  # No row-level errors, so it's a schema-level error
-        return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
-
+    schema_level_errors = failure_cases[failure_cases["index"].isna()]
+    if not schema_level_errors.empty:
+        # If schema-errors like missing columns, no rows are valid
+        return ValidationResult(pd.DataFrame(), failed_rows, failure_cases, True)
     valid_df = exc.data.drop(index=failed_rows.index)
-    logger.warning("The validated dataframe might not be valid.")
-    return ValidationResult(valid_df, failed_rows, pd.DataFrame(), True)
+    return ValidationResult(valid_df, failed_rows, failure_cases, True)

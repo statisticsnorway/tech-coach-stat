@@ -61,7 +61,7 @@ def test_valid_df_non_valid_rows_is_empty(valid_df):
 
 def test_valid_df_non_row_errors_is_empty(valid_df):
     result = validate_df(valid_df, SampleSchema)
-    assert result.non_row_errors.empty
+    assert result.failure_cases.empty
 
 
 def test_invalid_id_prefix_detected():
@@ -235,7 +235,7 @@ def test_missing_required_column_returns_non_row_errors():
     assert result.has_errors is True
     assert result.valid_rows.empty
     assert result.non_valid_rows.empty
-    assert not result.non_row_errors.empty
+    assert not result.failure_cases.empty
 
 
 # --- Tests for lazy=False ---
@@ -258,7 +258,7 @@ def test_valid_df_non_valid_rows_is_empty_lazy_false(valid_df):
 
 def test_valid_df_non_row_errors_is_empty_lazy_false(valid_df):
     result = validate_df(valid_df, SampleSchema, lazy=False)
-    assert result.non_row_errors.empty
+    assert result.failure_cases.empty
 
 
 def test_invalid_id_prefix_detected_lazy_false():
@@ -333,7 +333,7 @@ def test_missing_required_column_returns_non_row_errors_lazy_false():
 
     assert isinstance(result.valid_rows, pd.DataFrame)
     assert isinstance(result.non_valid_rows, pd.DataFrame)
-    assert isinstance(result.non_row_errors, pd.DataFrame)
+    assert isinstance(result.failure_cases, pd.DataFrame)
     assert result.has_errors is True
     assert result.valid_rows.empty
     assert result.non_valid_rows.empty
