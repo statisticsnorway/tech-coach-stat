@@ -45,44 +45,44 @@ def validate_df(
     """
     try:
         validated = schema.validate(df, lazy=lazy)
+        logger.info("%s validation successful", schema.__name__)
         return ValidationResult(validated, pd.DataFrame(), pd.DataFrame(), False)
-    except SchemaErrors as exc:
-        return _validation_result_from_schema_errors(exc)
-    except SchemaError as exc:
-        return _validation_result_from_single_error(exc)
+    except (SchemaErrors, SchemaError) as exc:
+        failure_cases = exc.failure_cases
+        if not isinstance(failure_cases, pd.DataFrame):
+            error_messages = pd.DataFrame(exc.args, columns=["error_message"])
+            logger.warning(
+                "%s validation failed with %i non-dataframe schema errors",
+                schema.__name__,
+                len(exc.args),
+            )
+            return ValidationResult(
+                pd.DataFrame(), pd.DataFrame(), error_messages, True
+            )
+        if "index" not in failure_cases.columns:
+            logger.warning(
+                "%s validation failed with %i non-index schema errors",
+                schema.__name__,
+                len(failure_cases),
+            )
+            return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
 
-
-def _validation_result_from_schema_errors(exc: SchemaErrors) -> ValidationResult:
-    failure_cases = exc.failure_cases
-    if not isinstance(failure_cases, pd.DataFrame):
-        error_messages = pd.DataFrame(exc.args, columns=["error_message"])
-        return ValidationResult(pd.DataFrame(), pd.DataFrame(), error_messages, True)
-    if "index" not in failure_cases.columns:
-        return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
-
-    row_level_errors = failure_cases[failure_cases["index"].notna()]
-    failed_rows = exc.data.loc[row_level_errors["index"].unique()]
-    schema_level_errors = failure_cases[failure_cases["index"].isna()]
-    if not schema_level_errors.empty:
-        # If schema-errors like missing columns, no rows are valid
-        return ValidationResult(pd.DataFrame(), failed_rows, failure_cases, True)
-    valid_df = exc.data.drop(index=failed_rows.index)
-    return ValidationResult(valid_df, failed_rows, failure_cases, True)
-
-
-def _validation_result_from_single_error(exc: SchemaError) -> ValidationResult:
-    failure_cases = exc.failure_cases
-    if not isinstance(failure_cases, pd.DataFrame):
-        error_messages = pd.DataFrame(exc.args, columns=["error_message"])
-        return ValidationResult(pd.DataFrame(), pd.DataFrame(), error_messages, True)
-    if "index" not in failure_cases.columns:
-        return ValidationResult(pd.DataFrame(), pd.DataFrame(), failure_cases, True)
-
-    row_level_errors = failure_cases[failure_cases["index"].notna()]
-    failed_rows = exc.data.loc[row_level_errors["index"].unique()]
-    schema_level_errors = failure_cases[failure_cases["index"].isna()]
-    if not schema_level_errors.empty:
-        # If schema-errors like missing columns, no rows are valid
-        return ValidationResult(pd.DataFrame(), failed_rows, failure_cases, True)
-    valid_df = exc.data.drop(index=failed_rows.index)
-    return ValidationResult(valid_df, failed_rows, failure_cases, True)
+        row_level_errors = failure_cases[failure_cases["index"].notna()]
+        failed_rows = exc.data.loc[row_level_errors["index"].unique()]
+        schema_level_errors = failure_cases[failure_cases["index"].isna()]
+        if not schema_level_errors.empty:
+            logger.warning(
+                "%s validation failed with %i schema errors and %i row errors",
+                schema.__name__,
+                len(schema_level_errors),
+                len(failed_rows),
+            )
+            return ValidationResult(pd.DataFrame(), failed_rows, failure_cases, True)
+        valid_rows = exc.data.drop(index=failed_rows.index)
+        logger.warning(
+            "%s validation failed with %i row errors and %i valid rows",
+            schema.__name__,
+            len(failed_rows),
+            len(valid_rows),
+        )
+        return ValidationResult(valid_rows, failed_rows, failure_cases, True)
