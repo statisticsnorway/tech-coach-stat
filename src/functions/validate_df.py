@@ -9,6 +9,71 @@ from pandera.pandas import DataFrameModel
 logger = logging.getLogger(__name__)
 
 
+def _flatten_error_messages(message: object) -> pd.DataFrame:
+    """Flatten pandera error messages into a readable table."""
+    if isinstance(message, dict):
+        rows = []
+        for category, reasons in message.items():
+            for reason, errors in reasons.items():
+                rows.extend(
+                    {
+                        "category": category,
+                        "reason": reason,
+                        "schema": error.get("schema"),
+                        "column": error.get("column"),
+                        "failed_check": error.get("check"),
+                        "description": error.get("error"),
+                    }
+                    for error in errors
+                )
+        return pd.DataFrame(rows)
+    return pd.DataFrame({"description": [message]}) if message else pd.DataFrame()
+
+
+def _format_failure_cases(failure_cases: pd.DataFrame) -> pd.DataFrame:
+    """Select and rename failure case fields for logging."""
+    columns = [
+        column
+        for column in ["index", "column", "check", "failure_case"]
+        if column in failure_cases.columns
+    ]
+    return failure_cases[columns].rename(
+        columns={"check": "failed_check", "failure_case": "failed_value"}
+    )
+
+
+def _log_validation_errors(
+    exc: SchemaErrors | SchemaError,
+    schema_name: str,
+    failure_cases: pd.DataFrame,
+    failed_rows: pd.DataFrame | None = None,
+) -> None:
+    """Log validation errors with failure cases and optional failed rows."""
+    error_messages = _flatten_error_messages(getattr(exc, "message", None))
+    if error_messages.empty and exc.args:
+        error_messages = _flatten_error_messages(exc.args[0])
+    if not error_messages.empty:
+        logger.info(
+            "%s validation error descriptions:\n%s",
+            schema_name,
+            error_messages.to_string(index=False),
+        )
+    failure_details = _format_failure_cases(failure_cases)
+    if not failure_details.empty:
+        logger.info(
+            "%s validation failed checks and values:\n%s",
+            schema_name,
+            failure_details.to_string(index=False),
+        )
+    if failed_rows is not None and not failed_rows.empty:
+        logger.debug(
+            "%i rows failed %s validation:\n%s",
+            len(failed_rows),
+            schema_name,
+            failed_rows.to_string(),
+        )
+
+
 class ValidationResult(NamedTuple):
     """Named tuple for storing validation results."""
 
@@ -51,6 +116,7 @@ def validate_df(
         failure_cases = exc.failure_cases
         if not isinstance(failure_cases, pd.DataFrame):
             error_messages = pd.DataFrame(exc.args, columns=["error_message"])
+            _log_validation_errors(exc, schema.__name__, error_messages)
             logger.warning(
                 "%s validation failed with %i non-dataframe schema errors",
                 schema.__name__,
@@ -60,6 +126,7 @@ def validate_df(
                 pd.DataFrame(), pd.DataFrame(), error_messages, True
             )
         if "index" not in failure_cases.columns:
+            _log_validation_errors(exc, schema.__name__, failure_cases)
             logger.warning(
                 "%s validation failed with %i non-index schema errors",
                 schema.__name__,
@@ -70,6 +137,7 @@ def validate_df(
         row_level_errors = failure_cases[failure_cases["index"].notna()]
         failed_rows = exc.data.loc[row_level_errors["index"].unique()]
         schema_level_errors = failure_cases[failure_cases["index"].isna()]
+        _log_validation_errors(exc, schema.__name__, failure_cases, failed_rows)
         if not schema_level_errors.empty:
             logger.warning(
                 "%s validation failed with %i schema errors and %i row errors",

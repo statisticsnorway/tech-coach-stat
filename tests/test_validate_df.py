@@ -1,6 +1,9 @@
+import logging
+
 import pandas as pd
 import pandera as pa
 import pytest
+from fagfunksjoner.log.statlogger import StatLogger
 from pandera.pandas import DataFrameModel
 from pandera.pandas import Field
 from pandera.typing import Series
@@ -352,3 +355,45 @@ def test_stops_at_first_error_lazy_false():
     result = validate_df(df, SampleSchema, lazy=False)
     assert result.has_errors is True
     assert len(result.non_valid_rows) == len(df)
+
+
+if __name__ == "__main__":
+    root_logger = StatLogger(log_level=logging.INFO)
+
+    valid_df = pd.DataFrame(
+        {
+            "id": ["SN001", "SN002", "SN003"],
+            "price": [10, 20, 5],
+            "quantity": [3, 5, 10],
+            "value": [30, 100, 50],
+        }
+    )
+    test_valid_df_has_no_errors(valid_df)
+    test_valid_df_all_rows_are_valid(valid_df)
+    test_valid_df_non_valid_rows_is_empty(valid_df)
+    test_valid_df_non_row_errors_is_empty(valid_df)
+    test_invalid_id_prefix_detected()
+    test_invalid_id_prefix_row_is_non_valid(valid_df)
+    test_null_id_detected()
+    test_duplicate_id_detected()
+    test_price_not_greater_than_one_detected()
+    test_price_not_greater_than_one_row_is_non_valid()
+    test_quantity_below_minimum_detected()
+    test_quantity_above_maximum_detected()
+    test_value_not_equal_price_times_quantity_detected()
+    test_extra_column_detected()
+    test_valid_rows_exclude_invalid_ones()
+    test_multiple_invalid_rows_all_captured()
+    test_single_valid_row(valid_df)
+    test_missing_required_column_returns_non_row_errors()
+    test_valid_df_has_no_errors_lazy_false(valid_df)
+    test_valid_df_all_rows_are_valid_lazy_false(valid_df)
+    test_valid_df_non_valid_rows_is_empty_lazy_false(valid_df)
+    test_valid_df_non_row_errors_is_empty_lazy_false(valid_df)
+    test_invalid_id_prefix_detected_lazy_false()
+    test_invalid_id_prefix_row_is_non_valid_lazy_false()
+    test_null_id_detected_lazy_false()
+    test_price_not_greater_than_one_detected_lazy_false()
+    test_price_not_greater_than_one_row_is_non_valid_lazy_false()
+    test_missing_required_column_returns_non_row_errors_lazy_false()
+    test_stops_at_first_error_lazy_false()
