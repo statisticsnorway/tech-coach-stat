@@ -6,11 +6,9 @@ from pathlib import Path
 
 # Change these variables
 COMPOSER_BUCKET = "ssb-tip-tutorials-automation-composer"
-SOURCE_FILE_PATH= "zip-workflow.zip"
-DESTINATION_PATH = "dags/zip-workflow.zip"
-INCLUDE_FOLDERS = ["config", "src/functions", "src/notebooks", "src/schemas"]
-WORKFLOW_FILE = "zip_workflow.py"
-EXCLUDE_PATHS = ["__pycache__"]
+SOURCE_FILE_PATH= "zip_hallo_workflow.zip"
+DESTINATION_PATH = "dags/zip_hallo_workflow.zip"
+WORKFLOW_FILE = "hallo_workflow.py"
 
 def zip_current_directory():
     script_path = os.path.abspath(__file__)
@@ -19,20 +17,8 @@ def zip_current_directory():
     print(root_dir)
     try:
         with zipfile.ZipFile(SOURCE_FILE_PATH, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for dir in INCLUDE_FOLDERS:
-                dir_path = os.path.join(root_dir, dir)
-                print(dir_path)
-                for root, _, files in os.walk(dir_path):
-                    if any(filter(lambda p: p in root, EXCLUDE_PATHS)):
-                        continue
-                    for file in files:
-                        print(file)
-                        file_path = os.path.join(root, file)
-                        arcname = os.path.relpath(file_path, root_dir).replace("src" + os.sep, "")
-                        zipf.write(file_path, arcname)
             workflow_path = os.path.join(script_dir, WORKFLOW_FILE)
             zipf.write(workflow_path, WORKFLOW_FILE)
-            zipf.write("requirements.txt", "requirements.txt")
     except Exception as e:
         print(f"Error creating zip: {e}")
 
