@@ -37,10 +37,11 @@ def _absolute_path(relative_path: str) -> Path:
 
 
 settings = Dynaconf(
+    root_path=Path(__file__).parent,
     settings_files=["settings.toml"],
     envvar_prefix="DYNACONF",
     environments=True,
-    env="default",  # Change this to switch environment: default, default_test, daplalab_files or local_files
+    env="default_test",  # Change this to switch environment: default, default_test, daplalab_files or local_files
     validators=[
         Validator(
             "kildedata_root_dir",

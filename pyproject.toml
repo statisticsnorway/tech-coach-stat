@@ -28,6 +28,8 @@ requires-poetry = ">=2.0"
 packages = [
     { include = "config" },
     { include = "functions", from = "src" },
+    { include = "notebooks", from = "src" },
+    { include = "schemas", from = "src" }
 ]
 
 [tool.poetry.group.dev.dependencies]
