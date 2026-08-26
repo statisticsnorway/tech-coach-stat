@@ -1,23 +1,42 @@
+from collections.abc import Generator
 from pathlib import Path
 
 import pytest
 
 from config.config import settings
 
+# In the fixtures below the yield is used to make sure that the environment
+# is reset to the originhal one after the tests are run.
 
-@pytest.fixture(scope="session")
-def default_env() -> None:
+
+@pytest.fixture
+def default_env() -> Generator[None, None, None]:
+    original_env = settings.current_env
     settings.configure(FORCE_ENV_FOR_DYNACONF="default")
+    try:
+        yield
+    finally:
+        settings.configure(FORCE_ENV_FOR_DYNACONF=original_env)
 
 
-@pytest.fixture(scope="session")
-def daplalab_files_env() -> None:
+@pytest.fixture
+def daplalab_files_env() -> Generator[None, None, None]:
+    original_env = settings.current_env
     settings.configure(FORCE_ENV_FOR_DYNACONF="daplalab_files")
+    try:
+        yield
+    finally:
+        settings.configure(FORCE_ENV_FOR_DYNACONF=original_env)
 
 
-@pytest.fixture(scope="session")
-def local_files_env() -> None:
+@pytest.fixture
+def local_files_env() -> Generator[None, None, None]:
+    original_env = settings.current_env
     settings.configure(FORCE_ENV_FOR_DYNACONF="local_files")
+    try:
+        yield
+    finally:
+        settings.configure(FORCE_ENV_FOR_DYNACONF=original_env)
 
 
 def test_daplalab_files_env(daplalab_files_env) -> None:
