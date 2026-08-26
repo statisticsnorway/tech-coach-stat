@@ -258,11 +258,19 @@ vignettes/*.pdf
 # R Environment Variables
 .Renviron
 
+# pkgdown site
+# SSB: The directory below is commented out because default when generating documentation with Sphinx
+#docs/
+
 # translation temp files
 po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Dynaconf secret and local files
+*.secrets.*
+*.local.*
 
 # ignore poetry in .config
 .poetry/**
