@@ -14,7 +14,9 @@ from functions.validate_df import validate_df
 class SampleSchema(DataFrameModel):
     """Schema for validating and testing testcases."""
 
-    id: Series[str] = Field(str_startswith="SN", nullable=False, unique=True)
+    id: Series[str] = Field(
+        str_startswith="SN", nullable=False, unique=True, str_length=5
+    )
     price: Series[int] = Field(gt=1)
     quantity: Series[int] = Field(in_range={"min_value": 1, "max_value": 100})
     value: Series[int]
@@ -214,14 +216,14 @@ def test_valid_rows_exclude_invalid_ones():
 def test_multiple_invalid_rows_all_captured():
     df = pd.DataFrame(
         {
-            "id": ["SN001", "XX002", "YY003"],
+            "id": ["SN001", "XX0023", "SN001"],
             "price": [10, 20, 5],
-            "quantity": [3, 5, 10],
-            "value": [30, 100, 50],
+            "quantity": [101, 5, 10],
+            "value": [1000, 100, 50],
         }
     )
     result = validate_df(df, SampleSchema)
-    assert len(result.non_valid_rows) == 2
+    assert len(result.non_valid_rows) == 3
 
 
 def test_single_valid_row(valid_df):
@@ -368,32 +370,3 @@ if __name__ == "__main__":
             "value": [30, 100, 50],
         }
     )
-    test_valid_df_has_no_errors(valid_df)
-    test_valid_df_all_rows_are_valid(valid_df)
-    test_valid_df_non_valid_rows_is_empty(valid_df)
-    test_valid_df_non_row_errors_is_empty(valid_df)
-    test_invalid_id_prefix_detected()
-    test_invalid_id_prefix_row_is_non_valid(valid_df)
-    test_null_id_detected()
-    test_duplicate_id_detected()
-    test_price_not_greater_than_one_detected()
-    test_price_not_greater_than_one_row_is_non_valid()
-    test_quantity_below_minimum_detected()
-    test_quantity_above_maximum_detected()
-    test_value_not_equal_price_times_quantity_detected()
-    test_extra_column_detected()
-    test_valid_rows_exclude_invalid_ones()
-    test_multiple_invalid_rows_all_captured()
-    test_single_valid_row(valid_df)
-    test_missing_required_column_returns_non_row_errors()
-    test_valid_df_has_no_errors_lazy_false(valid_df)
-    test_valid_df_all_rows_are_valid_lazy_false(valid_df)
-    test_valid_df_non_valid_rows_is_empty_lazy_false(valid_df)
-    test_valid_df_non_row_errors_is_empty_lazy_false(valid_df)
-    test_invalid_id_prefix_detected_lazy_false()
-    test_invalid_id_prefix_row_is_non_valid_lazy_false()
-    test_null_id_detected_lazy_false()
-    test_price_not_greater_than_one_detected_lazy_false()
-    test_price_not_greater_than_one_row_is_non_valid_lazy_false()
-    test_missing_required_column_returns_non_row_errors_lazy_false()
-    test_stops_at_first_error_lazy_false()
