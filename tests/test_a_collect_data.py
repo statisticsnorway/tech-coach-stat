@@ -5,6 +5,7 @@ import pytest
 from google.auth.exceptions import DefaultCredentialsError
 from pytest_mock import MockerFixture
 
+from config.config import settings
 from notebooks.a_collect_data import extract_latest_date_from_filename
 from notebooks.a_collect_data import frost_client_id
 from notebooks.a_collect_data import get_observations
@@ -42,7 +43,9 @@ class TestFrostClientId:
             "notebooks.a_collect_data.get_secret_version", return_value="test-client-id"
         )
         result = frost_client_id()
-        mock_get_secret.assert_called_once_with("tip-tutorials-p-mb", "FROST_CLIENT_ID")
+        mock_get_secret.assert_called_once_with(
+            settings.gcp_project_id, "FROST_CLIENT_ID"
+        )
         assert result == "test-client-id"
 
     # Handles DefaultCredentialsError when GSM credentials are not available
