@@ -34,6 +34,13 @@
 # See https://adr.ssb.no/0020-lagringsformat-for-jupyter-notebooks/
 *.ipynb
 
+# Visual Studio Code
+.vscode/*
+# Local History for Visual Studio Code
+.history/
+# Built Visual Studio Code Extensions
+*.vsix
+
 
 # The section below is from the GitHub .gitignore template for Python:
 # https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
