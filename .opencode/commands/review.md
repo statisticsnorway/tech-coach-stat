@@ -8,35 +8,30 @@ The optional base Git ref is:
 
 $1
 
-Determine the review scope as follows.
+## Argument Parsing & Scope Identification
 
-## No base ref
+1. **Check the base ref argument above**:
+   - If the line under "The optional base Git ref is" is empty, blank, or contains the literal text "$1", then **no base ref was provided**.
+   - Otherwise, the provided base ref is the exact string supplied.
 
-If no base ref was provided, review all current uncommitted changes.
+2. **If no base ref was provided**:
+   - Run `git status` and `git diff HEAD` to check for uncommitted changes (tracked, untracked, staged, or unstaged).
+   - **If uncommitted changes exist**: Review these uncommitted changes.
+   - **If the working tree is clean (no uncommitted changes)**:
+     - Automatically determine a base branch to compare against. Check for an upstream tracking branch using `git rev-parse --abbrev-ref --symbolic-full-name @{u}` or check common default branches (e.g., `main`, `master`, or `develop`).
+     - Find the common merge base using `git merge-base <detected_base> HEAD`.
+     - Review the committed changes on the current branch since that merge base.
+     - If no divergence or base branch can be determined, report that no changes were found to review.
 
-The reviewer should:
+3. **If a base ref was provided**:
+   - Review the changes introduced by the current branch since it diverged from that ref.
+   - Use three-dot diff semantics equivalent to:
+     `git diff <base>...HEAD`
+   - Inspect the changed files and relevant surrounding code.
+   - Also inspect `git status` for staged, unstaged, or untracked changes that are not included in `<base>...HEAD`, and report those separately.
 
-- Use `git status` to identify changed and untracked files.
-- Review changes to tracked files with `git diff HEAD`.
-- Inspect relevant untracked files reported by `git status`.
-- Read surrounding code, tests, callers, and related implementation when
-  necessary to understand the changes.
+## Review Guidelines
 
-## Base ref provided
-
-If a base ref was provided, review the changes introduced by the current
-branch since it diverged from that ref.
-
-The reviewer should:
-
-- Use three-dot diff semantics equivalent to:
-  `git diff <base>...HEAD`
-- Treat `$1` as the base ref exactly as supplied.
-- Inspect the changed files and relevant surrounding code.
-- Also inspect `git status` for staged, unstaged, or untracked changes that
-  are not included in `<base>...HEAD`.
-- Report those additional uncommitted changes separately.
-
-Do not modify files or implement fixes.
-
-Return the reviewer subagent's findings to the current primary agent.
+- Do not modify files or implement fixes.
+- Focus on code correctness, regressions, test coverage, and project-specific patterns.
+- Return the reviewer subagent's findings to the current primary agent.
