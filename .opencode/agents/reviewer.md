@@ -1,7 +1,7 @@
 ---
 description: Performs independent read-only code reviews.
 mode: subagent
-steps: 20
+steps: 40
 permission:
   edit: deny
 
