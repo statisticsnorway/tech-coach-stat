@@ -26,7 +26,12 @@ permission:
     "git merge-base *": allow
     "git ls-files": allow
     "git ls-files *": allow
-    "git branch -avv": allow
+    "git branch": allow
+    "git branch *": allow
+    "git rev-parse": allow
+    "git rev-parse *": allow
+    "git config": allow
+    "git config *": allow
 
   external_directory: deny
 ---
@@ -45,9 +50,11 @@ When inspecting Git state, run simple Git commands separately.
 
 Do not combine Git commands with `&&`, `||`, `;`, shell variables, command substitution, shell tests, or explicit `exit` commands.
 
-Prefer direct commands such as:
+Prefer direct, allowed commands such as:
 
 - `git status --short`
 - `git diff HEAD`
 - `git diff --cached --name-status`
 - `git ls-files --others --exclude-standard`
+- `git rev-parse --abbrev-ref HEAD`
+- `git merge-base <branch> HEAD`
