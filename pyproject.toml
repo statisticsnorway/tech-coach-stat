@@ -5,7 +5,7 @@ description = "Example of how to produce statistics for meteorological data."
 authors = [{name = "Arne Sørli", email = "81353974+arneso-ssb@users.noreply.github.com"}]
 license = "MIT"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.12,<3.14.1 || >3.14.1,<4.0"
 dependencies = [
     "dynaconf >=3.2",
     "pyarrow >=23.0",
@@ -20,6 +20,7 @@ dependencies = [
     "google-auth>=2.47.0",
     "google-api-core>=2.29.0",
     "requests>=2.32.5",
+    "ssb-timeseries (>=0.7.7.dev1788248202,<0.8.0)",
 ]
 
 [dependency-groups]
@@ -50,7 +51,13 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<4.0"
+python = ">=3.12,<3.14.1 || >3.14.1,<4.0"
+ssb-timeseries = {source = "testpypi"}
+
+[[tool.poetry.source]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+priority = "explicit"
 
 [build-system]
 requires = ["poetry-core>=2.2"]
