@@ -180,12 +180,24 @@ Sjekk status via blob-metadata (`done`, `processing`, `failed`):
 ```python
 from google.cloud import storage
 
+TEAM = "dapla-example"
+MILJOE = "prod"
+KILDENAVN = "altinn"  # mappenavnet i IaC-repoet
+
+# Kildenavnet normaliseres i metadatanøkkelen.
+status_key = f"source-{KILDENAVN.lower().replace('_', '-')}-status"
+
 client = storage.Client()
-bucket = client.bucket("ssb-dapla-example-data-kilde-prod")
+bucket = client.bucket(f"ssb-{TEAM}-data-kilde-{MILJOE}")
 for blob in bucket.list_blobs(prefix="altinn"):
-    if blob.metadata.get("source-altinn-status") == "failed":
+    # blob.metadata er None for filer Kildomaten aldri har sett.
+    if (blob.metadata or {}).get(status_key) == "failed":
         print(blob.name)
 ```
+
+Manualen er ikke entydig på nøkkelnavnet: statuseksempelet bruker `source-<kildenavn>-status`,
+mens metadataeksempelet viser `source-<kildenavn>-processor-status`. Får du ingen treff, skriv
+ut `blob.metadata` for én fil og les av det faktiske nøkkelnavnet.
 
 Kildomaten prøver en feilet fil inntil 10 ganger før den gir opp.
 
