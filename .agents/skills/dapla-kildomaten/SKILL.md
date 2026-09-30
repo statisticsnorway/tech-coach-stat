@@ -35,21 +35,56 @@ Skriptet kjøres på **én fil om gangen**.
 ```python
 import pandas as pd
 
+KILDE_BOETTE = "gs://ssb-dapla-example-data-kilde-prod"
+PRODUKT_BOETTE = "gs://ssb-dapla-example-data-produkt-prod"
+KORTNAVN = "ledstill"
+
+
+def utled_periode(source_file: str) -> str:
+    """Utleder perioden på navnestandardens format, f.eks. "2024-Q1".
+
+    Args:
+        source_file: Full gs://-sti til kildefilen.
+
+    Returns:
+        Perioden uten `p`-prefiks.
+    """
+    raise NotImplementedError("Implementeres per kilde")
+
 
 def main(source_file: str) -> None:
     """Prosesserer én kildefil og skriver resultatet til produktbøtta.
 
     Args:
         source_file: Full gs://-sti til filen som skal prosesseres.
+
+    Raises:
+        ValueError: Hvis filen ikke ligger i den forventede kildebøtta.
     """
+    if not source_file.startswith(f"{KILDE_BOETTE}/"):
+        raise ValueError(f"Uventet kildesti: {source_file}")
+
     df = pd.read_csv(source_file)
 
     # Dataminimering: behold kun det som trengs for statistikken
     df = df[["col1", "col2", "col3"]]
 
-    target = source_file.replace("kilde", "produkt").replace(".csv", ".parquet")
+    target = (
+        f"{PRODUKT_BOETTE}/{KORTNAVN}/inndata/"
+        f"skjema_p{utled_periode(source_file)}_v1.parquet"
+    )
     df.to_parquet(target)
 ```
+
+Kildomaten skriver **inndata**, og inndata er omfattet av navnestandarden:
+
+- Målstien må ligge under den obligatoriske mappestrukturen `<kortnavn>/inndata/`, og filnavnet
+  må ha `_p<periode>_v<versjon>`. Kildedata er unntatt navnestandarden — derfor kan du ikke
+  bare speile strukturen fra kildebøtta. Se skillen `dapla-datalagring`.
+- Ikke utled målbøtta med `source_file.replace("kilde", "produkt")`. `str.replace` bytter ut
+  *alle* forekomster, også i mappe- og filnavn. Bygg stien eksplisitt.
+- Målstien må fortsatt være unik per kildefil (krav 5 over). Hvis flere kildefiler kan havne på
+  samme periode, må du enten skille dem i beskrivelsen eller slå dem sammen bevisst.
 
 Anbefalt prosessering i Kildomaten:
 
