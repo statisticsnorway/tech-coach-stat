@@ -146,10 +146,13 @@ Bruk vanlig `pandas` / `arrow` — `dapla-toolbelt` og `fellesR` er ikke nødven
 
 ```python
 import pandas as pd
+from fagfunksjoner import next_version_path
 
 sti = "/buckets/produkt/ledstill/klargjorte-data/editert_p2024-Q1_v1.parquet"
 df = pd.read_parquet(sti)
-df.to_parquet(sti)
+
+# Skriv aldri tilbake til stien du leste fra — opprett en ny versjon.
+df.to_parquet(next_version_path(sti))
 ```
 
 Tekst, Excel og SAS leses tilsvarende med `pd.read_csv`, `pd.read_excel`,
