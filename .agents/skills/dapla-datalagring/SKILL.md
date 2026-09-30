@@ -127,8 +127,11 @@ from fagfunksjoner import (
 ny_sti = next_version_path(
     "gs://ssb-dapla-example-data-produkt-prod/ledstill/klargjorte-data/editert_p2024-Q1_v1.parquet"
 )
-# -> ..._v2.parquet
 ```
+
+`next_version_path` finner **høyeste eksisterende versjon i mappa** og legger til én — den
+teller ikke opp fra versjonsnummeret du sender inn. Sender du inn `_v1` mens `_v3` allerede
+finnes, får du `_v4`.
 
 ## 6. Lese og skrive data
 
