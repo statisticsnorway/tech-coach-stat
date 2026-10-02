@@ -2,7 +2,7 @@
 description: Independently review current changes or changes against a base ref
 ---
 
-Delegate the code review to the `reviewer` subagent.
+Delegate the code review to the `ssb-reviewer` subagent.
 
 The optional base Git ref is:
 
@@ -33,5 +33,5 @@ $1
 ## Review Guidelines
 
 - Do not modify files or implement fixes.
-- Focus on code correctness, regressions, test coverage, and project-specific patterns.
-- Return the reviewer subagent's findings to the current primary agent.
+- The `ssb-reviewer` subagent applies the `ssb-code-review` skill for methodology, severity labels, and output format. Do not restate or override them here.
+- Return the subagent's findings to the current primary agent.
