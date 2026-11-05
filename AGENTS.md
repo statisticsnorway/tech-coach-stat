@@ -62,3 +62,17 @@ poetry run python src/notebooks/a_collect_data.py          # single step
 ## CI
 
 GitHub Actions: `poetry install` → `pytest -v --cov --cov-report=xml` → SonarQube Cloud scan. Runs on PRs and merge to main/master.
+
+## Agent skills
+
+### Issue tracker
+
+Issues and specs live in the repo's GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Uses the default five canonical triage labels (needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+The project uses a single-context domain documentation layout. See `docs/agents/domain.md`.
