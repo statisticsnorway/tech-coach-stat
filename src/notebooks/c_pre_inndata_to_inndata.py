@@ -95,8 +95,11 @@ def transform_obs_to_inndata(df: pd.DataFrame) -> DataFrame[ObservationInndataSc
 
     # Remove unneeded columns, reorder and sort
     column_order = ["sourceId", "elementId", "observationTime", "value", "unit"]
-    df = df[column_order].sort_values(by=["sourceId", "elementId", "observationTime"])
-    df.reset_index(drop=True, inplace=True)
+    df = (
+        df[column_order]
+        .sort_values(by=["sourceId", "elementId", "observationTime"])
+        .reset_index(drop=True)
+    )
 
     return df.pipe(DataFrame[ObservationInndataSchema])
 
