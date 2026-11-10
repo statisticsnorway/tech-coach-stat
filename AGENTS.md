@@ -38,6 +38,7 @@ poetry run python src/notebooks/a_collect_data.py          # single step
 
 ## Critical quirks to follow
 
+- **Always respond in English**, even though the README and some domain terms are Norwegian.
 - **Dual path types:** `pathlib.Path` = local filesystem, plain `str` = GCS `gs://...` paths. Every file I/O function dispatches on the type. Never mix them up.
 - **Notebooks are .py files:** `.ipynb` is gitignored. Notebooks live as `src/notebooks/*.py` in Jupytext percent format. Edit as `.py`, not `.ipynb`.
 - **Kildomat is self-contained:** `b_kildomat.py` duplicates `file_abstraction.py` functions intentionally — it runs in a separate Docker container on Dapla without access to `src/functions/`.
@@ -67,7 +68,7 @@ GitHub Actions: `poetry install` → `pytest -v --cov --cov-report=xml` → Sona
 
 ### Issue tracker
 
-Issues and specs live in the repo's GitHub Issues. See `docs/agents/issue-tracker.md`.
+Issues and specs live as local Markdown files under `docs/specs/`. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
