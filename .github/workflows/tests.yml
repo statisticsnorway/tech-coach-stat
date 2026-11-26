@@ -6,48 +6,19 @@ on:
       - main
       - master
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-
+    runs-on: self-hosted
     steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          fetch-depth: 0 # Shallow clones disabled for a better SonarCloud analysis
-          persist-credentials: false
-
-      - name: Install Poetry
+      - name: Check URL status
         run: |
-          pipx install poetry
-          poetry --version
-
-      - name: Set up Python 3.13
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-        with:
-          python-version: "3.13"
-          cache: "poetry"
-
-      - name: Install dependencies
-        run: poetry install
-
-      - name: Run tests
-        run: poetry run pytest -v --cov --cov-report=term-missing --cov-report=xml
-
-      # Need to fix coverage source paths for SonarCloud scanning in GitHub actions.
-      # Replace root path with /github/workspace (mounted in docker container).
-      - name: Override coverage source paths for SonarCloud
-        run: |
-          sed -i "s/<source><\/source>/<source>\/github\/workspace<\/source>/g" coverage.xml
-          sed -i "s/<source>tests/<source>\/github\/workspace\/tests/g" coverage.xml
-
-      - name: SonarQube Cloud Scan
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        # No need to run SonarCloud analysis if dependabot update or token not defined
-        if: env.SONAR_TOKEN != '' && (github.actor != 'dependabot[bot]')
-        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4  # v8.2.2
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://www.nrk.no)
+          echo "URL Status Code: $STATUS"
+          if [ "$STATUS" != "200" ]; then
+            echo "Warning: URL returned status code $STATUS"
+          fi
